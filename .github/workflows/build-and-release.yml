@@ -1,49 +1,25 @@
 # .github/workflows/build-and-release.yml
 name: Build PDFs and Create Release
 
-# This action runs on every push to the 'main' branch
 on:
   push:
     branches:
-      - main # Or master, depending on your branch name
+      - main
 
 jobs:
   build_and_release:
     runs-on: ubuntu-latest
-    
-    # This step is crucial for allowing the action to create a GitHub Release
     permissions:
       contents: write
       
     steps:
-      # 1. Checks out your repository's code so the action can access it
       - name: Checkout Repo
         uses: actions/checkout@v4
 
-      # # 2. Run your custom build script
-      # #    This step assumes your script is executable.
-      # #    Replace './build.sh' with the actual command to run your script.
-      # #    For example: 'make pdfs' or 'python compile.py'
-      # - name: Run Custom Build Script
-      #   run: |
-      #     echo "Starting the PDF compilation process..."
-      #     # IMPORTANT: Replace this line with your actual build command
-      #     make all_pdfs 
-      #     echo "PDFs compiled successfully."
-
-      # 3. Creates a 'latest' release and uploads all PDFs from the 'build' directory
       - name: Create Release and Upload PDFs
         uses: softprops/action-gh-release@v2
         with:
-          # This makes sure there is always a single 'latest' release
-          # that gets updated, instead of creating a new one each time.
           tag_name: 'latest'
-          
-          # This tells the action to upload ALL files ending with .pdf
-          # from the 'build' directory.
-          #
-          # IMPORTANT: Make sure your build script outputs the PDFs here.
-          # If your PDFs are in the root, you can use '*.pdf'.
           files: |
-            "Course Summary/course material.pdf"
-            "Functions/functions.pdf"
+            Course Summary/course material.pdf
+            Functions/functions.pdf

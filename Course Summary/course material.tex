@@ -6,22 +6,39 @@
 \usepackage{titlesec}
 \usepackage{fancyhdr}
 
-\usepackage{xr-hyper} % External referencing
-% \externaldocument[func:]{../Functions/functions} % Path to functions.aux
-
-
 \usepackage{colortbl}
 \usepackage{graphicx}
+\graphicspath{ {../Assets/} }
 \usepackage{float}
+\usepackage{caption}
 
 \usepackage{soul}
-
 \usepackage{enumitem}
-
-
 \usepackage{array}
 \usepackage{booktabs}
 
+\usepackage{amsthm}
+\usepackage{amsmath}
+
+
+\usepackage[dvipsnames]{xcolor}
+
+
+% =====================================================
+% ================== New Commands =====================
+% =====================================================
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\red}[1]{\textcolor{Red}{#1}}
+\newcommand{\blue}[1]{\textcolor{RoyalBlue}{#1}}
+\newcommand{\gray}[1]{\textcolor{gray}{#1}}
+\newcommand{\green}[1]{\textcolor{Green}{#1}}
+\newcommand{\purple}[1]{\textcolor{Purple}{#1}}
+\newcommand{\orange}[1]{\textcolor{BurntOrange}{#1}}
+
+
+% =====================================================
+% ============== Listings Formats =====================
+% =====================================================
 \usepackage{listings}
 \lstset{
     language=C++,
@@ -29,7 +46,7 @@
     keywordstyle=\color{blue}\bfseries,    % keywords
     ndkeywordstyle=\color{magenta},        % more keywords like types (int, char, etc.)
     identifierstyle=\color{black},         % variable names
-    commentstyle=\color{gray}\itshape,     % comments
+    commentstyle=\color{Green}\itshape,     % comments
     stringstyle=\color{teal},              % strings
     numberstyle=\tiny\color{gray},         % line numbers
     numbers=left,                          % line number position
@@ -50,31 +67,9 @@
 }
 
 
-
-
-\usepackage{amsthm}
-\usepackage{amsmath}
-
-\newcommand{\code}[1]{\texttt{#1}}
-
-\usepackage[dvipsnames]{xcolor}
-\newcommand{\red}[1]{\textcolor{Red}{#1}}
-\newcommand{\blue}[1]{\textcolor{RoyalBlue}{#1}}
-\newcommand{\gray}[1]{\textcolor{gray}{#1}}
-\newcommand{\green}[1]{\textcolor{Green}{#1}}
-\newcommand{\purple}[1]{\textcolor{Purple}{#1}}
-\newcommand{\orange}[1]{\textcolor{BurntOrange}{#1}}
-
-
-
 % =====================================================
-% ============== Listings Formats =====================
-
-
-
-
-
-
+% =========== Page Headers & Chapters =================
+% =====================================================
 \geometry{margin=1in}
 \titleformat{\section}{\large\bfseries}{\thesection}{1em}{}
 \pagestyle{fancy}
@@ -84,49 +79,11 @@
 
 
 
-% =====================================================
-% =====================================================
-% =====================================================
-% % Define new counters
-% \newcounter{lecture}
-% \newcounter{tutorial}
-
-% % Format titles to look like chapters
-% \titleformat{\chapter}[display]
-%   {\normalfont\Huge\bfseries}{\chaptername\ \thechapter}{20pt}{\Huge}
-
-% \newcommand{\lecturechaptername}{Lecture}
-% \newcommand{\tutorialchaptername}{Tutorial}
-
-% % Custom "Lecture Chapter"
-% \newcommand{\lecture}[1]{%
-%   \clearpage
-%   \refstepcounter{lecture}
-%   \renewcommand{\chaptername}{\lecturechaptername}%
-%   \addcontentsline{toc}{chapter}{Lecture \thelecture: #1}
-%   \chapter*{Lecture \thelecture: #1}
-%   \markboth{Lecture \thelecture}{#1}
-% }
-
-% % Custom "Tutorial Chapter"
-% \newcommand{\tutorial}[1]{%
-%   \clearpage
-%   \refstepcounter{tutorial}
-%   \renewcommand{\chaptername}{\tutorialchaptername}%
-%   \addcontentsline{toc}{chapter}{Tutorial \thetutorial: #1}
-%   \chapter*{Tutorial \thetutorial: #1}
-%   \markboth{Tutorial \thetutorial}{#1}
-% }
-
-
 \newcounter{Topic}
-
 % Format titles to look like chapters
 \titleformat{\chapter}[display]
   {\normalfont\Huge\bfseries}{\chaptername\ \thechapter}{20pt}{\Huge}
-
 \newcommand{\topicchaptername}{Topic}
-
 % Custom "Topic Chapter"
 \newcommand{\Topic}[1]{%
   \clearpage
@@ -136,8 +93,10 @@
   \chapter*{Topic \theTopic: #1}
   \markboth{Topic\theTopic}{#1}
 }
+
+
 % =====================================================
-% =====================================================
+% ================== Title Page =======================
 % =====================================================
 
 \title{Operating Systems (02340123)\\ Summary - Spring 2025}
@@ -160,8 +119,8 @@
 % ====================================================
 % ====================================================
 
-\part{Lectures \& Tutorials}
 
+\part{Lectures \& Tutorials}
 
 
 % =====================================================
@@ -246,6 +205,7 @@ Notable services provided by an OS:
 % ================== Lecture 2 ========================
 % =====================================================
 
+
 \Topic{Processes \& Signals}
 \section*{Processes}
 
@@ -295,7 +255,7 @@ A process can be in one of the following states:
 \end{figure}
 
 
-As we saw in "ATAM", each process can only access a certain set of utilites and functions, those who require privilege level 3 (user mode). So to access the OS services, a process must use \textbf{system calls} which are functions provided by the OS that allow processes to request services from the OS. System calls are typically implemented in the OS kernel and provide a controlled interface for processes to interact with the OS.
+As we saw in "ATAM", each process can only access a certain set of utilities and functions, those who require privilege level 3 (user mode). So to access the OS services, a process must use \textbf{system calls} which are functions provided by the OS that allow processes to request services from the OS. System calls are typically implemented in the OS kernel and provide a controlled interface for processes to interact with the OS.
 
 \vspace{1em}
 
@@ -376,7 +336,7 @@ A process can block signals using the \texttt{sigprocmask()} system call, which 
           \begin{itemize}
               \item \texttt{SIGSEGV}: Segmentation violation (illegal memory reference, e.g., outside an array).
               \item \texttt{SIGBUS}: Dereference invalid address (null/misaligned, assume it's like SEGV).
-              \item \texttt{SIGIILL}: Illegal instruction (trying to invoke privileged instruction).
+              \item \texttt{SIGILL}: Illegal instruction (trying to invoke privileged instruction).
               \item \texttt{SIGFPE}: Floating-point exception (despite the name, \textit{all} arithmetic errors, not just floating point. e.g., division by zero).
           \end{itemize}
 
@@ -384,7 +344,7 @@ A process can block signals using the \texttt{sigprocmask()} system call, which 
 
     \item \textbf{\code{SIGALRM}}: Get a signal after some specified time, can be set using the \blue{\code{alarm()} \& \code{setitimer()}} system calls.
 
-    \item \textbf{\code{SIGTRAP}}: When debuggin/single-stepping a process, the debugger can set a breakpoint in the code, which will cause the process to receive a \texttt{SIGTRAP} signal when it reaches that point.
+    \item \textbf{\code{SIGTRAP}}: When debugging/single-stepping a process, the debugger can set a breakpoint in the code, which will cause the process to receive a \texttt{SIGTRAP} signal when it reaches that point.
 
     \item \textbf{\code{SIGUSR1, SIGUSR2}}: User-defined signals, user can decide the meaning of these signals and their handlers.
 
@@ -432,6 +392,8 @@ A process can block signals using the \texttt{sigprocmask()} system call, which 
 % =====================================================
 % ================== Lecture 3 ========================
 % =====================================================
+
+
 \Topic{IPC - Inter-Process Communication}
 
 \section*{Threads \& IPC}
@@ -578,6 +540,10 @@ The usage of ULTs is mainly for concurrent programming, where we want multiple m
 
 
 
+% =====================================================
+% ================== Lecture 4 ========================
+% =====================================================
+
 
 \newpage
 \Topic{Scheduling}
@@ -603,18 +569,496 @@ When evaluating the performance of a \underline{batch} scheduling algorithm, we 
           \begin{equation*}
               \text{responseTime} = \text{terminateTime} - \text{submitTime}
           \end{equation*}
+
+          \red{\textbf{Note:}} Average wait time and response time differ only by a constant factor, which is the job's average runtime.
+
+    \item \textbf{The Slowdown / Expansion Factor:} The ratio between a job's response time and its runtime. i.e.
+          \begin{equation*}
+              \begin{aligned}
+                  \text{slowdown} & = \frac{\text{responseTime}}{\text{runtime}}                \\
+                                  & = \frac{(\text{waitTime} + \text{runtime})}{\text{runtime}} \\
+                                  & = 1 + \frac{\text{waitTime}}{\text{runtime}}
+              \end{aligned}
+          \end{equation*}
+
+    \item \textbf{Utilization:} The percentage of time the resource (CPU) is busy.
+
+    \item \textbf{Throughput:} How much work is done in one time unit.
+\end{itemize}
+
+
+\subsection*{Batch Scheduling Algorithms}
+\begin{center}
+    \begin{minipage}{0.30\textwidth}
+        \vspace{0pt} % force top alignment
+        \centering
+        \includegraphics[width=\linewidth]{FCFS.png}
+    \end{minipage}\hfill
+    \begin{minipage}{0.65\textwidth}
+        \vspace{0pt} % force top alignment 
+        \paragraph{First-Come, First-Served (FCFS)} Jobs are scheduled by their arrival time. If there are enough free cores, a newly arriving job starts to run immediately, otherwise it wait, sorted by arrival time, until enough cores are available.
+        \begin{itemize}
+            \item \textbf{Pros:} Simple to implement (FIFO Queue), fair to all jobs.
+            \item \textbf{Cons:} Creates \textit{\ul{fragmenation}}, small/short jobs might wait a long time.
+        \end{itemize}
+    \end{minipage}
+\end{center}
+
+\noindent\rule{\linewidth}{0.4pt}
+
+
+\begin{center}
+    \begin{minipage}{0.65\textwidth}
+        \vspace{0pt} % force top alignment
+        \paragraph{EASY Scheduling (= FCFS + backfilling)} Backfilling optimization: A short waiting job can jump over the head of the wait queue (i.e. start at an earlier time) provided that \red{it doesn't delay} the job \@ head of the FCFS queue.\\
+
+        The algorithm: whenever a job arrives or terminates, try to start the job \@ head of the FCFS wait queue. Then, iterate over the rest of teh waiting jobs (in FCFS order) and try to backfill them.
+
+        \begin{itemize}
+            \item \textbf{Pros:} Better utilization (less fragmentation), short jobs have a better chance of running sooner.
+            \item \textbf{Cons:} Must know runtimes in advance.
+        \end{itemize}
+    \end{minipage}\hfill
+    \begin{minipage}{0.3\textwidth}
+        \vspace{0pt} % force top alignment 
+        \centering
+        \includegraphics[width=\linewidth]{EASY.png}
+    \end{minipage}
+\end{center}
+
+\noindent\rule{\linewidth}{0.4pt}
+
+
+\paragraph{Shortest Job First (SJF)} Instead of ordering jobs by their arrival time, we order them by \blue{their (typically estimated) runtimes}.
+\begin{itemize}
+    \item \textbf{Pros:} \red{Optimal} in terms of performance (min. avg. wait time).
+    \item \textbf{Cons:} Unfair as it may cause \textbf{starvation} of long jobs. \gray{starvation = can theorically wait forever}
+\end{itemize}
+
+\noindent\rule{\linewidth}{0.4pt}
+
+
+
+\paragraph{Convoy Effect} Slowing down all \gray{(possibly short)} processes due to currently servicing a very long process. \textit{FCFS} suffers from this effect, as does \textit{EASY} scheduling but to a lesser extent. \textit{SJF} \red{without assumptions} also suffers from this effect but to an even lesser extent.
+
+\begin{samepage}
+    \paragraph{Optimality of SJF} As mentioned above, SJF is optimal in terms of performance, in particular, it minimizes the average wait time. \blue{\textbf{Claim:}}\\
+    Given:
+    \begin{enumerate}
+        \item A 1-core system where all jobs are serial.
+        \item All process arrive together.
+        \item Their runtimes are known in advance.
+    \end{enumerate}
+    Then: \textit{The average wait time of SJF is equal to or less than the average wait time of any other batch scheduling order.}
+\end{samepage}
+
+
+\paragraph{Fairer Varients of SJF} Motivation: disallow job starvation.
+\begin{itemize}
+    \item \textbf{Shortest-Job Backfilled First (SJBF):} Exactly like EASY in terms of servicing the head of the wait queue in FCFS order (and not allowing anyone to delay it), but the \textit{backfilling} traversal is done in SJF order, i.e. the next job to be backfilled is the one with the shortest estimated runtime.
+
+    \item \textbf{Largest eXpansion Factor (LXF):} LXF is similar to EASY, but instead of ordering the wait queue in FCFS, it orders jobs based on their current slowdown \red{(greater slowdown = higher priority)}.
+
+          \indent On every job arrival or termination, the expansion factors are recalculated and the wait queue is resorted, so that the job with the largest expansion factor is always at the head of the queue. Both the head of the queue and the backfilled jobs are serviced in LXF order.
 \end{itemize}
 
 
 
+\newpage
+\section*{Preemptive Schedulers}
+\paragraph{Preemption} \textit{is the act of suspending one job (process) in favor of another even though it is not finished yet.}
+
+Why do we need preemption? Preemption is necessary for \textbf{responsiveness} and when the runtime of jobs vary or unknown in advance.
+
+\paragraph{Quantum} \textit{is the maximum amount of time a process is allowed to run before it is preempted.} Quantum is typically milliseconds to 10s of milliseconds, and is \textit{often set per-process}. Usually a CPU-bound process gets long quanta while an I/O-bound process gets short quanta with higher priority.
+
+\paragraph{Performance Metrics for Preemptive Schedulers} we use the following:
+\begin{itemize}
+    \item \textbf{Average Wait Time:} As before, the wait time of a job is the interval between the time the job \textbf{is submitted} to the time the job \textbf{starts to run}. \textit{Note} that the wait time \red{does not include} the preemption wait times (i.e. the time the job is waiting for its turn to run again after being preempted).
+
+    \item \textbf{Response Time (=Turnaround Time):} Like before, the response time is the time from process submission to process completion. \textit{Note} that with preemption we get:
+          \begin{equation*}
+              \text{responseTime} \geq \text{waitTime} + \text{runtime}
+          \end{equation*}
+          due to the preemption wait times and \textbf{Context Switches} cost.
+
+    \item \textbf{Overhead:} How long a context switch takes, and how often context switches happen. (Should be minimized)
+
+    \item \textbf{Utilization \& Throughput:} Same as before, but we may want to account for context switch overhead.
+
+    \item \textbf{Makespan Time:} The time it takes for the system to finish all jobs in the system.
+
+\end{itemize}
+
+
+\paragraph{Round Robin (RR) Scheduling} \textit{Processes are arranged in a cyclic read-queue}. The algorithm works in the following steps:
+\begin{enumerate}
+    \item  The head process runs until its quantum is exhausted.
+    \item The head process is then preempted (suspended) and moved to the tail of the queue.
+    \item The scheduler resumes the next process in the circular list.
+    \item When we've cycled through all processes in the run-list (and we reach the head process again), we say that the current \textbf{"epoch"} is over, and the next epoch begins.
+\end{enumerate}
+\textbf{Note:} RR Requires a timer interrupt; Typically it's a periodic interrupt (fires every few milliseconds) and upon receiving the interrupt, the OS checks if its time to preempt.
+\textbf{Note 2:} For \ul{small enough} quantum, it's like everyone of the N processes advances in \(1/N\) of the speed of the core \gray{called sometimes virtual time}.
+With \ul{huge} quantum \gray{infinity}, RR becomes FCFS.
+
+\paragraph{Gang Scheduling} Think of it as RR for \textit{parallel} systems. It works as follows:
+\begin{itemize}
+    \item Time is divided to slots (seconds or minutes).
+    \item Every job has a \textbf{"native"} time slot.
+    \item Algorithm attempts to fill holes in time slots by assigning to them jobs from other native slots (called \textbf{"alternative"} slots).
+    \item Algorithm attempts to minimize slot number using \textbf{slot unification} when possible.
+    \item Rarely used in practice, if lots of memory is swapped out upon context switch, context switch overhead is too high.
+\end{itemize}
+Detailed explanation about alternative slots and slot unification:
+
+\paragraph{Alternative Slots} To further enhance resource utilization, the gang scheduling algorithm attempts to fill holes in time slots. A job has a "native" time slot where it is primarily scheduled to run. However, if there are idle processors in other time slots (termed "alternative" slots), the scheduler can assign jobs from their native slots to run in these otherwise unused resources. This allows jobs to get more processing time without interfering with the primary scheduling of other jobs.
+
+\paragraph{Slot Unification}This technique aims to minimize the total number of active time slots. If, after some jobs have completed, the remaining jobs in two different time slots can fit into a single slot without conflict, the scheduler can merge them. By unifying slots, the overall cycle time of the matrix is reduced, which can lead to shorter job turnaround times and improved system throughput.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{GangScheduling.png}
+    \caption{Gang Scheduling}
+    \label{fig:Gang_Scheduling}
+\end{figure}
+
+
+\begin{samepage}
+    \paragraph{Batching vs. Preemption} \textbf{Assume:} (1) A single core system (2) All jobs arrive together (3) Context switch price = 0. \textbf{Then:} There \ul{exists} a non-preemptive algorithm such that:
+    \begin{equation*}
+        \text{avgResponseTime}(\text{non-preemptive}) \leq \text{avgResponseTime}(\text{preemptive})
+    \end{equation*}
+    As a result, SJF is also optimal relative to preemptive scheduling (if our assumptions hold).
+    \begin{equation*}
+        \text{avgResponseTime}(\text{SJF}) \leq \text{avgResponseTime}(\text{batch or preemptive scheduler})
+    \end{equation*}
+\end{samepage}
+
+
+\paragraph{Connection Between RR \& SJF} \textbf{Assume:} (1) A single core system (2) All jobs arrive together \gray{(and only use CPU, no I/O)} (3) Quantum is uniform + \red{no} context switch overhead. \textbf{Then:}
+\begin{equation*}
+    \text{avgResponse}(\text{RR}) \leq \text{avgResponse}(\text{SJF})
+\end{equation*}
+i.e. RR at best is as good as SJF, and at worst is \(2X\) slower.
+
+
+\paragraph{Shortest Remaining Time First (SRTF)} If we remove the assumption that all jobs arrive together, then SJF is not optimal anymore, as it may cause a convoy effect. \textbf{SRTF} is a preemptive version of SJF, where the scheduler always runs the job with the shortest remaining time. i.e. when a new job arrives or an old one finishes, the scheduler runs the job with the shortest remaining time, even if it means preempting the currently running job. This is optimal in terms of average wait time, but it can cause starvation for long jobs.
+
+
+\paragraph{Selfish RR} Selfish RR is a variant of RR where only "old enough" processes are running in the run-queue. i.e.
+\begin{itemize}
+    \item New processes wait in a FIFO queue, not yet scheduled.
+    \item Older processes scheduled using RR.
+    \item New processes are scheduled when either of the following happens:
+          \begin{enumerate}
+              \item The run-queue is empty (i.e. no ready-to-run "old" processes exist).
+              \item "Aging" is being applied to new processes \gray{(a per-process counter increases over time)}; When the counter passes a certain threshold, the "new" process becomes "old" and is transferred to the RR queue.
+          \end{enumerate}
+    \item \textbf{Fast Aging} = Algorithm resembles RR, \textbf{Slow Aging} = Algorithm resembles FCFS.
+\end{itemize}
+
+
+\section*{General Purpose Schedulers (Priority-Based \& Preemptive)}
+
+\paragraph{Scheduling using priority} Every process is assigned a priority. The priority reflects how "important" it is in that time instance, and it changes dynamically over time. Process with higher priority are favored, as they are scheduled before lower priority processes. The concept of priority can be also applied in batch scheduling. e.g. SJF:priority = runtime (smaller runtime = higher priority), FCFS:priority = arrival time (earlier arrival = higher priority), etc.
+
+\paragraph{Negative Feedback Principle} The schedulers of all general-purpose OSes employ a negative feedback policy: \ul{Running reduces priority to run more} \& \ul{Not running increases priority to run}.
+As a result, I/O-bound processes (that seldom use the CPU) get higher priority than CPU-bound processes (that use the CPU a lot). This ensures that I/O-bound processes are responsive.
+
+\paragraph{Multi-Level Priority Queue} A multi-level priority queue consists of several RR queues, each associated with a priority. processes migrate between the queues so they have a dynamic priority, "important" processes move up (e.g. I/O-bound) and "unimportant" processes move down (e.g. CPU-bound). Priority is greatly affected by the \textbf{negative feedback principle}, i.e. by CPU consumption:
+\begin{itemize}
+    \item I/O-bound \(\Longleftrightarrow\) move up
+    \item CPU-bound \(\Longleftrightarrow\) move down
+\end{itemize}
+Some schedulers allocate short quanta to higher priority queues, and some don't or even do the opposite.
+
+
+
+\section*{Linux \(\leq\) 2.4 Scheduler}
+All of the definitions below are relative only to the Linux \(\leq\) 2.4 scheduler, which is a preemptive priority-based scheduler that uses a multi-level priority queue. \textbf{Note:} A task is either a process or a thread.
+
+\paragraph{Standard POSIX Scheduling Policies} POSIX dictates that each task is associated with one of three scheduling policies:
+\begin{itemize}
+    \item \textbf{"Realtime"} Policies:
+          \begin{enumerate}
+              \item \code{SCHED\_RR} (round-robin)
+              \item \code{SCHED\_FIFO} (first-in, first-out)
+          \end{enumerate}
+    \item The default policy:
+          \begin{enumerate}
+              \setcounter{enumi}{2}
+              \item \code{SCHED\_OTHER} (the default time-sharing policy)
+          \end{enumerate}
+\end{itemize}
+POSIX defines the meaning of \code{SCHED\_OTHER} (aka \code{SCHED\_NORMAL} in Linux) is decided by the OS. Typically employs some multi-level priority queue with the negative feedback loop.
+
+\textit{Realtime} tasks are \blue{always favored} by the scheduler. Only an admin can set a task to run with a \textit{realtime} policy, the users can set a policy using the \code{sched\_setscheduler} syscall.
 
 
 
 
+\paragraph{Epoch} As mentioned before,every runnable task gets allocated a quantum, which is the CPU time the task is allowed to consume before is it's stopped by the OS. Whenever all quanta of all \textit{runnable} tasks become zero a \textbf{new epoch} begins. In this case we allocate additional running time to \textit{all tasks} (runnable or not).
+
+\subsection*{Definitions}
+\begin{itemize}
+    \item \textbf{Task's Priority:} Every task is associated with an integer, the higher the value the higher the priority to run. Every task has a \textit{static} priority and a \textit{dynamic} priority.
+    \item \textbf{Static Priority:} A fixed value that indirectly determines the maximal quantum for the task. Fixed unless the user invokes \code{nice()} or \code{sched\_setscheduler} syscalls.
+    \item \textbf{Dynamic Priority:} Is the both the \blue{remaining time} for the task and its \blue{current priority}. The dynamic priority decreases over time (while running), if it reaches zero the task is preempted until the next epoch. The dynamic priority is \textit{reset} to the static priority at the beginning of each epoch.
+
+    \item \textbf{HZ:} Linux gets a timer interrupt \textit{HZ} times per second, i.e. it gets a timer interrupt every \(\frac{1}{\textit{HZ}}\) seconds. The default value of \textit{HZ} is 100 for x86/Linux2.4.
+
+    \item \textbf{Tick:} A tick can mean either of the following:
+          \begin{itemize}
+              \item The time that elapses between two consecutive timer interrupts, i.e. \(\frac{1}{\textit{HZ}}\) seconds.
+              \item The timer interrupt itself that fires every \(\frac{1}{\textit{HZ}}\) seconds.
+          \end{itemize}
+          Ticks are used to determine the scheduler timing resolution, the OS measures the passage of time in ticks. The units of the \textit{dynamic priority} are ticks.
+
+    \item \textbf{task\_struct:} Every task is represented by a \textit{task\_struct} object, which contains (among other things):
+          \begin{enumerate}
+              \item nice \gray{static priority}
+              \item counter \gray{dynamic priority}
+              \item processor \gray{the last CPU core the task ran on}
+              \item need\_resched \gray{boolean}
+              \item mm \gray{task's memory address space}
+          \end{enumerate}
+
+    \item \textbf{task's nice} There are two types of nice, user nice and kernel nice. The \textbf{kernel's nice} is the \textit{static priority} of the task, which is \blue{between 1...40} (higher is better) and the \blue{default is 20}. The \textbf{user's nice} is the parameter passed to the \code{nice()} syscall, which is \blue{between -20...19} (\red{lower} is better). Values below 0 require superuser privileges.
+          \begin{equation*}
+              \text{kernel\_nice} = 20 - \text{user\_nice}
+          \end{equation*}
+
+          \begin{samepage}
+              \item {\textbf{task's counter}} The \textit{dynamic priority} of the task. It is calculated as follows:
+              \begin{itemize}
+                  \item Upon task creation:
+                        \begin{equation*}
+                            \begin{aligned}
+                                \text{child.counter}  & = \text{parent.counter}/2; & \gray{\text{(round down)}} \\
+                                \text{parent.counter} & -= \text{child.counter};   & \gray{\text{(round up)}}
+                            \end{aligned}
+                        \end{equation*}
+                  \item Upon a new epoch:
+                        \begin{equation*}
+                            \begin{aligned}
+                                \text{task.counter} & = \text{task.counter}/2 + \text{NICE\_TO\_TICKS}(\text{task.nice}) \\
+                                                    & \gray{= \text{half of prev dynamic + convert\_to\_ticks(static)}}
+                            \end{aligned}
+                        \end{equation*}
+                  \item When running: decrement each tick by 1 (task.counter--) until it reaches 0.
+              \end{itemize}
+              The \textbf{NICE\_TO\_TICKS} function scales 20 (=DEF\_PRIORITY) to number of tick compromising \textbf{50+ ms}. By default, scales 20 to 5+ ticks:\\
+              \code{\#define NICE\_TO\_TICKS(kern\_nice) ((kern\_nice) / 4 + 1)}\\
+              So the quantum range is therefore: \gray{(recall that 1 tick = 10 ms)}
+              \begin{itemize}
+                  \item (1/4 + 1=) 1 tick = 10 ms (min.)
+                  \item (20/4 + 1=) 6 ticks = 60 ms (default)
+                  \item (40/4 + 1=) 11 ticks = 110 ms (max.)
+              \end{itemize}
+
+          \end{samepage}
+
+    \item \textbf{task's processor} Logical ID of CPU core upon which task has executed most recently, if task is currently running, then this is the core it is running on.
+
+    \item \textbf{task's need\_resched} A boolean flag that is checked by kernel just before switching back to user-mode. If set, check if there's a "better" task than the one currently running, and if so, switch to it. Can be thought of as a per-core rather than per-task flag as it is checked only for the currently running task.
+
+    \item \textbf{task's mm} A pointer to the task's memory address space. \gray{(More details in the virtual memory lectures)}
+\end{itemize}
+
+
+The scheduler is implemented in the \code{kernel/sched.c} file, and the task structure is defined in \code{include/linux/sched.h}. The scheduler is compromised of \textbf{4 main functions}:
+\begin{enumerate}
+    \item \code{goodness(task, cpu)} - Given a task and a CPU core, returns how "desirable" it is for that CPU. We compare tasks by this value to determine which task to run next.
+    \item \code{schedule()} - Actual implementation of the scheduler. Uses \code{goodness} to decide which task to run on a given core.
+    \item \code{\_\_wake\_up\_common(wait\_queue q)} - Wakes up task(s) when waited-for event has happened. e.g. completion of I/O operation, or a signal being sent to the task.
+    \item \code{reschedule\_idle(task t)} - Given a task, check whether it can be scheduled on some core. Preferably on an idle core, but if not then by preempting a less "desirable" task on a busy core. \blue{Note:} used by the \code{schedule()} \& \code{\_\_wake\_up\_common()} functions.
+\end{enumerate}
+
+\paragraph{Counter Convergence} \textbf{Claim:} The counter value of an I/O-bound task will quickly converge to \(2\alpha\) \gray{geometric series}.
+\textbf{Corollary:} By default, an I/O-bound task will have a counter of 12 ticks (=120 ms) \gray{as long as it remains I/O-bound and consumes neglligble CPU time}.
+
+\paragraph{The Drawback} The scheduler is a linear scheduler, i.e. it runs in \(O(n)\) time. It was replaced by the "\(O(1)\)" scheduler which then was replaced by the "\textit{Completely Fair Scheduler}" (CFS) which is \(O(\log n)\).
+
+
+\newpage
+\Topic{Synchoronization \& Deadlocks}
+
+\paragraph{\red{Race Condition}} We say that the program suffers from a \textit{race condition} if the \textit{outcome is nondeterministic and depends on teh timing of uncontrollable, un-synchronized events}
+
+\paragraph{Memory (Cache) Coherency} is the mechanism that ensures that any change to a shared piece of data in one cache is eventually propagated to all other caches, preventing processors from working with outdated information.
+
+\paragraph{Cache Consistency} it dictates how memory operations (reads and writes) from one processor can be observed by other processors in the system. If store operations are immediately seen by other cores and they can't be reordered with load operations, then consistency holds. (but it's not a necessary condition)
+
+Cache \textbf{coherency} relates to a \textbf{single} memory location, while cache \textbf{consistency} relates to \textbf{multiple} memory locations. coherency ensures cores see writes in some order that makes sense, and is uniform across all cores. Consistency is about the order of different read and write operations across multiple memory locations, and how they are observed by different cores.
+
+To enforce ordering for memory consistency, explicit \textbf{memory fence} (memory barrier) must be used. The fence makes all store-s that happened before the fence visible to all load-s after the fence, notably, flushes the store buffer to teh memory system.
+
+
+\paragraph{Atomicy} In programming, atomicity means an operation, or a series of operations, appears to happen all at once, without any interruption from other processes. This ensures that either the entire operation completes successfully, or it has no effect at all, preventing partial or incomplete results.
+
+
+\paragraph{Critical Section} A group of operations we need to atomically execute is called a \textbf{critical section}. Atomicity will make sure other threads don't see partial results! The critical section can be a uniform code across all threads, or it can be a different.
+
+\paragraph{Mutual Exclusion (mutex)} is a property of a critical section that ensures that only one thread can execute it at a time and never simultaneously. Thus a critical section is a \blue{"serilaization point"}.
+
+
+% // TODO: Write about deadlock and livelocks!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+\section*{Locks}
+
+\paragraph{Lock} A lock is an abstraction that supports two operations: \code{acquire(lock)} and \code{release(lock)}.
+Semantically: It's a memory fence, only one thread at a time can acquire the lock and other simultaneous attempts to acquire are postponed until the lock released. Implementing a lock is nowadays done using hardware support with special instructions that ensure mutual exclusion.
+
+\paragraph{Spinlock} A spinlock is a lock that uses busy-waiting to acquire the lock. i.e. it repeatedly checks if the lock is available and only then acquires it. Spinlocks are typically used in low-level code where the overhead of sleeping and waking up is too high, or when the critical section is very short. If interrupt or signal handlers access the same data as the critical section, then the we must disable them, or make sure they acquire the lock too!
+
+\begin{lstlisting}[language=C, caption={Spinlock Implementation}, label={lst:spinlock}]
+struct spinlock {
+    uint locked; // 0 = unlocked, 1 = locked
+};
+
+// The volatile keyword is crucial here. It tells the compiler that the value at addr can be changed by external factors (like another CPU core or hardware) at any time. This prevents the compiler from making optimizations like caching the value in a register, forcing it to read directly from memory every time.
+inline uint xchg(volatile uint *addr, uint newval) {
+    // atomic [oldval = *addr, swap(*addr, newval)]
+    // xchg is atomic
+    // lock adds a memory fence
+    uint oldval;
+    asm volatile("lock; xchg %0, %1"
+                 : "+m" (*addr), "=r"(oldval):
+                 "1"(newval):
+                 "cc");
+    return oldval;
+}
+
+void acquire(struct spinlock *lock) {
+    disable_interrupts();
+    while (xchg(&lock->locked, 1) != 0) {
+        // busy-wait until the lock is available
+        enable_interrupts();  // if we want to enable
+        disable_interrupts(); // interrupts while spinning
+    }
+}
+
+void release(struct spinlock *lock) {
+    xchg(&lock->locked, 0); // set the lock to unlocked
+    enable_interrupts(); 
+}
+\end{lstlisting}
+
+
+\paragraph{Other Atomic Operations} We know of \textbf{3} atomic operations that are used to implement spinlocks:
+\begin{enumerate}
+    \item \textbf{xchg(addr, newval)} - Atomically exchanges the value at \code{addr} with \code{newval} and returns the old value.
+
+    \item \textbf{test\_and\_set(bool *b)} - Atomically sets \code{*b} to \textit{true} and returns the old value of \code{*b}.
+
+    \item \textbf{cas(int *p, int old\_val, int new\_val)} - (Compare-and-Swap) Atomically compares the value at \code{*p} with \code{old\_val}, and if they are equal, sets \code{*p} to \code{new\_val} and returns true. Otherwise, it returns false and does not change \code{*p}.
+\end{enumerate}
+
+
+\paragraph{Spinning or Blocking} A lock can be implemented using either \textbf{spinning} or \textbf{blocking}:
+\begin{itemize}
+    \item \textbf{Spin (busy wait)} - The thread repeatedly checks if the lock is available, consuming CPU cycles while waiting. This is suitable for short critical sections where the wait time is expected to be very short. Note that the user \red{can not} block context switches.
+
+    \item \textbf{Block (go to wait/sleep)} - The thread goes to sleep and is woken up when the lock is available. This is suitable for longer critical sections where the wait time can be significant.
+\end{itemize}
+Rule of thumb: If the critical section is shorter than the time a context switch takes, then use spinning, otherwise use blocking.\\
+Unlike spinning which can be done by the user, going to sleeping is done by a request to the OS (since it involves changing process states).
 
 
 
+\section*{Semaphores}
 
+\paragraph{The Basics} A semaphore is usually implemented as a counter and a queue of waiting threads. A task that announces it's waiting for a resource will get the resource if it is available or will go to sleep otherwise. In case it goes to sleep it will be awakened when the resource becomes available to it.
+
+The fields of the semaphore are as follows:
+\begin{itemize}
+    \item Value (integer) \gray{(the counter)}:\par
+          If value is Non-negative, it indicates the number of available resources. If value is negative, it indicates the number of tasks waiting for the resource.
+
+    \item A queue of waiting task: \par
+          Every task that is waiting for the resource to become available is stored in this queue. When the value is negative, \(|\text{value}| = \text{queue.lenght}|\)/
+
+\end{itemize}
+
+
+The functions used to manipulate the semaphore are:
+\begin{itemize}
+    \item \code{wait(sem)}: Decrements the value of the semaphore. If the value \gray{after decrementing} is negative, the task goes to sleep and is added to the queue of waiting tasks. Otherwise, it continues execution.
+
+    \item \code{signal(sem)}: Increments the value of the semaphore. If the value was negative before incrementing, it wakes up one task from the queue of waiting tasks.
+\end{itemize}
+
+\paragraph{Semaphore Implementation} The semaphore is implemented in the kernel and \red{not} part of the course material. However, the following is a demonstration of the problem known as \red{\textbf{lost wakeups}}.
+\begin{lstlisting}[language=C, caption={Lost Wakeups Problem}, label={lst:lost_wakeups}]
+struct semaphore_t {
+    int value;                          
+    wait_queue_t wait_queue;            
+    lock_t lock;                        
+};
+
+void wait(semaphore_t *sem) {
+    lock(&sem->lock);
+    sem->value--; 
+    if (sem->value < 0) {
+        enque(self, &sem->wait_queue);
+        unlock(&sem->lock);             // This is the problem!
+        block(self);
+    } else 
+        unlock(&sem->lock);
+}
+
+void signal(semaphore_t *sem) {
+    lock(&sem->lock);
+    sem->value++;
+    if (sem->value <= 0) {
+        p = dequeue(&sem->wait_queue); // Part of the problem too!
+        wakeup(p);
+    }
+}
+\end{lstlisting}
+The problem with the above implementation is that we release the the lock before going to sleep but after joining the queue, so if another task calls \code{signal()} red{before} we go to sleep, it will wake us up (without being asleep) and we \red{will exit} the wait queue so \textit{no one will be able to wake us up again}. This is known as the \textbf{lost wakeups} problem.
+
+
+
+\begin{samepage}
+    \begin{center}
+        \textbf{Spinlock vs. Semaphore}
+        \rowcolors{2}{gray!15}{white}
+        \begin{tabular}{|>{\raggedright\arraybackslash}p{3cm}|
+            >{\raggedright\arraybackslash}p{4cm}|
+            >{\raggedright\arraybackslash}p{6cm}|}
+            \hline
+            \rowcolor{blue!30}
+                                 & \textbf{spinlock}                                               & \textbf{semaphore}                                                                                                                 \\
+            \hline
+            wait by              & spinning                                                        & sleeping                                                                                                                           \\
+            granularity          & fine                                                            & coarse: might wait for a long time                                                                                                 \\
+            complexity           & lower                                                           & greater: typically uses lock                                                                                                       \\
+            expressiveness       & lower                                                           & greater: equivalent to lock if maximal value=1 (called ``binary semaphore''); otherwise, counting how many resources are available \\
+            interface ordering   & strict: must acquire before release, must release after acquire & relaxed: may signal(s) without wait(s), may wait(s) without signal(s)                                                              \\
+            interface dependence & strict: release only invoked by locker                          & relaxed: signal may be invoked by threads that didn't previously wait and vice versa                                               \\
+            \hline
+        \end{tabular}
+    \end{center}
+\end{samepage}
+
+
+\paragraph{Amdahl's Law} Amdahl's Law is a formula that gives the maximum improvement to an overall system when only part of the system is improved.\par
+So what is the maximal expected speed when parallelizing?
+\begin{itemize}
+    \item Let \(n\) be the number of threads.
+    \item Let \(s\) be the fraction of the program that is strictly serial \((0\leq s \leq 1)\).
+    \item Let \(T_n\) be the time it takes to run the algorithm with n threads.
+    \item Then, optimally:
+          \begin{equation*}
+              T_n = T_1 \times \left( s + \frac{1-s}{n} \right) \geq T_1 \times sem
+          \end{equation*}
+    \item The speedup is defined as:
+          \begin{equation*}
+              speedup = \frac{T_1}{T_n} = \frac{1}{s + \frac{1-s}{n}} \leq \frac{1}{s}
+          \end{equation*}
+\end{itemize}
 
 
 

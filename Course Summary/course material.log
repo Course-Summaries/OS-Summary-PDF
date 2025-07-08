@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.8.21)  29 JUN 2025 22:38
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.8.21)  8 JUL 2025 20:12
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -547,7 +547,7 @@ Underfull \hbox (badness 2529) in paragraph at lines 223--225
 []\OT1/cmr/m/n/12 Each PCB con-tains: \OT1/cmtt/m/n/12 real[]parent\OT1/cmr/m/n/12 , \OT1/cmtt/m/n/12 parent\OT1/cmr/m/n/12 ,
  []
 
-<../Assets/process_memory.png, id=77, 721.19438pt x 831.105pt>
+<../Assets/process_memory.png, id=82, 721.19438pt x 831.105pt>
 File: ../Assets/process_memory.png Graphic file (type png)
 <use ../Assets/process_memory.png>
 Package pdftex.def Info: ../Assets/process_memory.png  used on input line 233.
@@ -558,7 +558,7 @@ Package pdftex.def Info: ../Assets/process_memory.png  used on input line 233.
 
 
  <../Assets/process_memory.png>]
-<../Assets/process_states.png, id=85, 2366.08969pt x 1290.32062pt>
+<../Assets/process_states.png, id=90, 2366.08969pt x 1290.32062pt>
 File: ../Assets/process_states.png Graphic file (type png)
 <use ../Assets/process_states.png>
 Package pdftex.def Info: ../Assets/process_states.png  used on input line 252.
@@ -617,7 +617,7 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-2.49998pt}.
 
 [11]
-<../Assets/thread_stack.png, id=118, 1298.60156pt x 931.98187pt>
+<../Assets/thread_stack.png, id=123, 1298.60156pt x 931.98187pt>
 File: ../Assets/thread_stack.png Graphic file (type png)
 <use ../Assets/thread_stack.png>
 Package pdftex.def Info: ../Assets/thread_stack.png  used on input line 410.
@@ -654,7 +654,7 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-2.49998pt}.
 
 [14]
-<../Assets/FCFS.png, id=141, 806.26219pt x 457.71pt>
+<../Assets/FCFS.png, id=146, 806.26219pt x 457.71pt>
 File: ../Assets/FCFS.png Graphic file (type png)
 <use ../Assets/FCFS.png>
 Package pdftex.def Info: ../Assets/FCFS.png  used on input line 595.
@@ -669,7 +669,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 613--614
 
  []
 
-<../Assets/EASY.png, id=147, 810.02625pt x 528.47438pt>
+<../Assets/EASY.png, id=153, 810.02625pt x 528.47438pt>
 File: ../Assets/EASY.png Graphic file (type png)
 <use ../Assets/EASY.png>
 Package pdftex.def Info: ../Assets/EASY.png  used on input line 625.
@@ -702,7 +702,7 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-2.49998pt}.
 
 [18]
-<../Assets/GangScheduling.png, id=171, 1988.32837pt x 475.7775pt>
+<../Assets/GangScheduling.png, id=176, 1988.32837pt x 475.7775pt>
 File: ../Assets/GangScheduling.png Graphic file (type png)
 <use ../Assets/GangScheduling.png>
 Package pdftex.def Info: ../Assets/GangScheduling.png  used on input line 721.
@@ -765,11 +765,6 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-2.49998pt}.
 
 [24]
-Overfull \hbox (3.71078pt too wide) in paragraph at lines 885--885
-|\OT1/cmr/bx/n/24.88 Topic 5: Syn-choroniza-tion & Dead-locks| 
- []
-
-
 Overfull \hbox (31.12663pt too wide) in paragraph at lines 910--912
 [] []\OT1/cmr/bx/n/12 Lock[] \OT1/cmr/m/n/12 A lock is an ab-strac-tion that sup-ports two op-er-a-tions: \OT1/cmtt/m/n/12 acquire(lock) \OT1/cmr/m/n/12 and \OT1/cmtt/m/n/12 release(lock)\OT1/cmr/m/n/12 .
  []
@@ -824,12 +819,64 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-2.49998pt}.
 
 [29]
+<../Assets/ResourceGraph.png, id=307, 560.99588pt x 269.50688pt>
+File: ../Assets/ResourceGraph.png Graphic file (type png)
+<use ../Assets/ResourceGraph.png>
+Package pdftex.def Info: ../Assets/ResourceGraph.png  used on input line 1095.
+(pdftex.def)             Requested size: 281.85587pt x 135.41107pt.
 
-[30
+
+
+Package fancyhdr Warning: \headheight is too small (12.0pt): 
+(fancyhdr)                Make it at least 14.49998pt, for example:
+(fancyhdr)                \setlength{\headheight}{14.49998pt}.
+(fancyhdr)                You might also make \topmargin smaller to compensate:
+(fancyhdr)                \addtolength{\topmargin}{-2.49998pt}.
+
+[30]
+
+
+Package fancyhdr Warning: \headheight is too small (12.0pt): 
+(fancyhdr)                Make it at least 14.49998pt, for example:
+(fancyhdr)                \setlength{\headheight}{14.49998pt}.
+(fancyhdr)                You might also make \topmargin smaller to compensate:
+(fancyhdr)                \addtolength{\topmargin}{-2.49998pt}.
+
+[31 <../Assets/ResourceGraph.png>]
+Overfull \hbox (8.39557pt too wide) in paragraph at lines 1129--1130
+[]\OT1/cmr/m/n/12 Making all re-sources sharable, by im-ple-ment-ing some data struc-ture us-ing only hardware-
+ []
+
+
+
+
+Package fancyhdr Warning: \headheight is too small (12.0pt): 
+(fancyhdr)                Make it at least 14.49998pt, for example:
+(fancyhdr)                \setlength{\headheight}{14.49998pt}.
+(fancyhdr)                You might also make \topmargin smaller to compensate:
+(fancyhdr)                \addtolength{\topmargin}{-2.49998pt}.
+
+[32]
+
+
+Package fancyhdr Warning: \headheight is too small (12.0pt): 
+(fancyhdr)                Make it at least 14.49998pt, for example:
+(fancyhdr)                \setlength{\headheight}{14.49998pt}.
+(fancyhdr)                You might also make \topmargin smaller to compensate:
+(fancyhdr)                \addtolength{\topmargin}{-2.49998pt}.
+
+[33]
+
+[34
+
 
 ]
 
-[31
+[35
+
+]
+
+[36
 
 ] (./course material.aux)
  ***********
@@ -837,21 +884,21 @@ LaTeX2e <2024-06-01> patch level 2
 L3 programming layer <2024-07-20>
  ***********
 Package rerunfilecheck Info: File `"course material".out' has not changed.
-(rerunfilecheck)             Checksum: E01FC07660800523579FCA42B30791CE;1497.
+(rerunfilecheck)             Checksum: FD9095177080702DBB830C7596E93CCA;1576.
  ) 
 Here is how much of TeX's memory you used:
- 15091 strings out of 473579
- 232911 string characters out of 5732263
+ 15168 strings out of 473579
+ 233930 string characters out of 5732263
  2070960 words of memory out of 5000000
- 37652 multiletter control sequences out of 15000+600000
+ 37695 multiletter control sequences out of 15000+600000
  566924 words of font info for 67 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 75i,12n,80p,741b,1410s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,12n,80p,778b,1410s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb><c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbxti10.pfb><c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb><c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmitt10.pfb><c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb><c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb><c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb><c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb><c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb><c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb><c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb><c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb><c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmti12.pfb><c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmti8.pfb><c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb><c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt12.pfb><c:/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sfrm1200.pfb>
-Output written on "course material.pdf" (31 pages, 1171180 bytes).
+Output written on "course material.pdf" (36 pages, 1300169 bytes).
 PDF statistics:
- 417 PDF objects out of 1000 (max. 8388607)
- 334 compressed objects within 4 object streams
- 145 named destinations out of 1000 (max. 500000)
- 95 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 477 PDF objects out of 1000 (max. 8388607)
+ 387 compressed objects within 4 object streams
+ 179 named destinations out of 1000 (max. 500000)
+ 108 words of extra memory for PDF output out of 10000 (max. 10000000)
 

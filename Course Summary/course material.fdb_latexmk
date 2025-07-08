@@ -1,12 +1,13 @@
 # Fdb version 4
-["pdflatex"] 1751225913.54089 "c:/Users/30raz/OneDrive - Technion/Documents/Technion/Sem 6/Operating Systems/Summary/OS-Summary-PDF/Course Summary/course material.tex" "course material.pdf" "course material" 1751225917.27168 0
+["pdflatex"] 1751994740.45064 "c:/Users/30raz/OneDrive - Technion/Documents/Technion/Sem 6/Operating Systems/Summary/OS-Summary-PDF/Course Summary/course material.tex" "course material.pdf" "course material" 1751994744.45771 0
   "../Assets/EASY.png" 1751187603 52760 b3c29f45a825a0dcf59cee2929c1e75a ""
   "../Assets/FCFS.png" 1751187490 40380 cfecee4f2e42c6f733b3e76344d52c0b ""
   "../Assets/GangScheduling.png" 1751200589 465473 9196dfb33fcc273755a81d2d489770b9 ""
+  "../Assets/ResourceGraph.png" 1751282701 125301 1b2cb5139841745c8666ca49bc920eb1 ""
   "../Assets/process_memory.png" 1749633902 123822 3bffa32c2b0b1ec1534e739487cb2cb0 ""
   "../Assets/process_states.png" 1749298193 397130 e886167117e7b9c4545ac244dd22e48e ""
   "../Assets/thread_stack.png" 1749730563 123632 a099cccbd2f8e63ffbb091023a0a848d ""
-  "c:/Users/30raz/OneDrive - Technion/Documents/Technion/Sem 6/Operating Systems/Summary/OS-Summary-PDF/Course Summary/course material.tex" 1751225908 66518 9ab1cf342c6959564f5332343d121e32 ""
+  "c:/Users/30raz/OneDrive - Technion/Documents/Technion/Sem 6/Operating Systems/Summary/OS-Summary-PDF/Course Summary/course material.tex" 1751994739 77371 a4ff02d80ac1ff63036910adf7b5abfc ""
   "c:/texlive/2024/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc" 1724194673 2900 1537cc8184ad1792082cd229ecc269f4 ""
   "c:/texlive/2024/texmf-dist/fonts/map/fontname/texfonts.map" 1724197663 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "c:/texlive/2024/texmf-dist/fonts/tfm/jknappen/ec/ectt1000.tfm" 1724196390 1536 06717a2b50de47d4087ac0e6cd759455 ""
@@ -124,10 +125,10 @@
   "c:/texlive/2024/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1724209924 5543950 2aa73a438b7054b2327b796fbe5f4275 ""
   "c:/texlive/2024/texmf-var/web2c/pdftex/pdflatex.fmt" 1724210190 8239323 39456700c5ef0ee02d5a632e9703d6e2 ""
   "c:/texlive/2024/texmf.cnf" 1724209893 713 e69b156964470283e0530f5060668171 ""
-  "course material.aux" 1751225917 8396 b667830461146d3f7f8cf352c4abb51b "pdflatex"
-  "course material.out" 1751225917 1497 e01fc07660800523579fca42b30791ce "pdflatex"
-  "course material.tex" 1751225908 66518 9ab1cf342c6959564f5332343d121e32 ""
-  "course material.toc" 1751225917 4478 d714d4547fe795103dc0e80da1ff63d1 "pdflatex"
+  "course material.aux" 1751994744 10036 609ce7b66ca859db25dbf1aeb8ff49b8 "pdflatex"
+  "course material.out" 1751994744 1576 fd9095177080702dbb830c7596e93cca "pdflatex"
+  "course material.tex" 1751994739 77371 a4ff02d80ac1ff63036910adf7b5abfc ""
+  "course material.toc" 1751994744 5205 2389074c9efb545715b3d8a8cf4d6ac8 "pdflatex"
   (generated)
   "course material.aux"
   "course material.log"

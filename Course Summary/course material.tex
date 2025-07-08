@@ -882,7 +882,7 @@ The scheduler is implemented in the \code{kernel/sched.c} file, and the task str
 
 
 \newpage
-\Topic{Synchoronization \& Deadlocks}
+\Topic{Synchoronization}
 
 \paragraph{\red{Race Condition}} We say that the program suffers from a \textit{race condition} if the \textit{outcome is nondeterministic and depends on teh timing of uncontrollable, un-synchronized events}
 
@@ -1059,6 +1059,176 @@ So what is the maximal expected speed when parallelizing?
               speedup = \frac{T_1}{T_n} = \frac{1}{s + \frac{1-s}{n}} \leq \frac{1}{s}
           \end{equation*}
 \end{itemize}
+
+
+\newpage
+\section*{Deadlocks \& Livelocks}
+
+\paragraph{Progress} At any given time, at least one thread is able to do the critical section, i.e. No "deadlock" or "livelock" occur.
+\begin{itemize}
+    \item \textbf{Deadlock} - A situation in which two or more competing actions are each waiting for the other to finish, and thus no one ever finishes. e.g. two threads waiting for each other to release a lock.
+
+    \item \textbf{Livelock} - A situation in which two or more competing actions are each trying to finish, but they keep interfering with each other, and thus no one ever finishes. e.g. two threads trying to acquire a lock, but they keep releasing it and trying again.
+
+    \item \textbf{Starvation} - A situation in which a thread is unable to finish its critical section because it is always preempted by other threads. e.g. a low-priority thread that is never scheduled because high-priority threads keep running.
+\end{itemize}
+
+
+\paragraph{Deadlock State} We say that a \ul{system} is in a deadlock state, and not a given process. \textbf{The popular definition:} A set of processes is deadlocked if each process in the set is waiting for an event that only a process in the set can cause. \textbf{Our definition:} A set of processes is deadlocked if \red{each} process in the set is waiting for a resource held by another process \red{in the set} \gray{(The set can be a subset of the set of all process)}. \textbf{Note:} Deadlocks are tough to deal with since the system is not guaranteed to enter a deadlock if it is prone to deadlocks.
+
+\paragraph{Resource types} Resource \blue{types} can be either physical (e.g. Disk/Disk Block, NIC \gray{(network controller)}, Keyboard, etc.) or logical (e.g. Process Table / node in a tree, etc.).
+
+Some resources only have one instance (e.g. keyboard) and others have multiple instances (e.g. producer-consumer ring).
+
+Therefore, \textbf{Locks} are a synchronization construct that reflect a single instance, while \textbf{Semaphores} are a synchronization construct that reflect multiple instances of a resource type. \red{\textbf{Note:}} A binary semaphore is equivalent to a mutex lock.
+
+\paragraph{Resource Allocation Graph} When considering resource management, it is convenient to represent the system state with a directed graph. We can represent the system in one of two ways:
+\begin{itemize}
+    \item \textbf{Multi-Resource Allocation Graph:} A directed graph where: (1) "round" nodes are processes (2) "square" nodes are resources with the dots in them representing the number of instances (3) edges from process to resource represent request (4) edges from resource to process represent allocation.
+
+    \item \textbf{Single Instance Resources (Simplified):} We can simplify the system with a directed graph where: (1) nodes are processes (2) edges mark dependencies between processes, i.e. an edge from process A to process B means that A is waiting for a resource held by B.
+
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{ResourceGraph.png}
+    \caption{Resource Allocation Graph}
+    \label{fig:Resource_Allocation_Graph}
+\end{figure}
+
+
+\paragraph{Necessary Conditions for Deadlocks} \red{All} of the following \red{must hold} for a deadlock to occur:
+\begin{enumerate}
+    \item \textbf{Mutual Exclusion:} \par
+          At least one resource must be held in a non-shareable mode, i.e. only one process at a time can use the resource. \gray{if every resource is shareable or used by a single process, then no deadlock can occur.}
+
+    \item \textbf{Hold \& Wait:} \par
+          Processes holding resources are allowed to request additional resources without releasing the resources they already hold. \gray{If processes must release all resources before requesting new ones or atommically request all resources, then no deadlock can occur.}
+
+    \item \textbf{Circular Wait:} \par
+          There must be a circular chain of two or more processes, each waiting for a resource held by the next process in the chain. i.e. \(P(i)\) wait for resource held by \(P((i+1)\%n)\). \gray{Otherwise there exists at least one process that doesn't need to wait}
+
+    \item \textbf{No Resource Preemption:} \par
+          Resources cannot be forcibly taken from a process holding them, they must be voluntarily released. \gray{If resources held can be released after some period of time, then no deadlock can occur.}
+\end{enumerate}
+
+
+\paragraph{Dealing with Deadlocks} There are \textbf{3} main strategies to deal with deadlocks:
+\begin{itemize}
+    \item \textbf{Deadlock Prevention:} Violate one of the 4 conditions necessary for deadlock to occur.
+
+    \item \textbf{Deadlock Detection \& Recovery:} Allow the system to enter deadlock state, but put in place mechanisms that can detect, and then recover from this situation. Typically refers to killing one or more processes in the deadlock state, using the algorithmic resource-graph problem.
+
+    \item \textbf{Deadlock Avoidance:} Use a resource allocation graph to detect potential deadlocks and avoid them by not allocating resources that would lead to a deadlock. (e.g. Banker's Algorithm). Requires full knowledge of the system's resource requirements and current allocation.
+\end{itemize}
+
+\paragraph{Deadlock Prevention} There are 4 conditions for deadlock to occur, and we can prevent deadlocks by violating one of them:
+\begin{enumerate}
+    \item \textbf{No Mutual Exclusion:} \par
+          Making all resources sharable, by implementing some data structure using only hardware-supported atomic operations. These algorithms are called "lock free".
+
+    \item \textbf{No Hold \& Wait:} \par
+          Each process must request all resources it needs at once, or release all resources before requesting new ones. The system either grants all resources or none and block the process.
+          \textbf{Con:} Processes will hold on to their resources for more time than they actually need them, which limits concurrency and hence limits performance.
+
+    \item \textbf{No Circular Wait:} \gray{the most usable flexible method} \par
+          Impose a strict ordering on resources, i.e. number all resources in one sequence. Processes can only request resources in increasing order, a process that wants to acquire a resource that has a lower order must first release all resources it holds that have a higher order.
+
+    \item \textbf{No "No Resource Preemption":} \par
+          When needed, choose a victim process and release its resources, allowing other processes to continue. \par
+          \gray{e.g. if there isn't enough memory, we can backup the victim's state to disk and release all its memory, or just kill the process.}
+
+\end{enumerate}
+
+\paragraph{Deadlock Detection \& Recovery} If there is \ul{only one instance} of each resource type, then a deadlock can be detected by checking for cycles in the \textbf{simplified resource allocation graph}. In the \ul{general} case \gray{(multiple instances of each resource type)}, Necessary conditions for deadlock are not sufficient, nevertheless, we can still detect deadlocks but it is \textit{outside the scope of this course}. \par
+
+After a deadlock is detected, we can recover from it by: \textbf{(1)} Killing one or more processes in the deadlock state until the deadlock is resolved, or \textbf{(2)} Forcibly preempting resources from one or more processes in the deadlock state. Finding the minimal set of processes to kill/preempt is a hard problem.
+
+In literature, Detection and Recovery refer to the algorithmic problem of finding the minimal set of processes to kill/preempt in the resource graph.
+
+\paragraph{Deadlock Avoidance} The system can avoid deadlocks by not allocating resources that would lead to a deadlock. This is achieved by the \textbf{Banker's Algorithm}, which is a resource allocation and deadlock avoidance algorithm that tests for safety before allocating resources. The algorithm maintains a \textit{safe state} and only allocates resources if it can guarantee that the system will remain in a safe state after the allocation. The algorithm requires knowledge of the maximum resource requirements of each process and the current allocation of resources.
+
+\textbf{Safe State:} A system state where we are sure that all processes can be executed \textbf{in some order}, one after the other, such that each one will obtain all the resources it needs to finish. We assume once a process recives all the resources it needs, it will finish and release all its resources. \par
+
+\paragraph{Rules of the Banker's Algorithm} The Banker's Algorithm works as follows:
+\begin{itemize}
+    \item There are \(n\) processes and \(k\) resource types \gray{(each resource can have multiple instances)}.
+    \item Upon initilizaion, each process \(p\) \blue{declares the maximal} number of resource-instances it will need for each type, \blue{\(\max[p]\)}.
+    \item While running, OS mainains how many resources are \blue{currently allocated} to each process, \blue{\(cur[p]\)}.
+    \item And how many resource instances are \blue{currently available (free)}, \blue{\(avail\)}.
+    \item Upon a request for resources by a process \(p\), \blue{\(R\)}, the OS allocates iff the system will stay in a safe-state after the allocation. If not, the process is blocked until the resources are available.
+\end{itemize}
+
+\textbf{Note:} The Banker's Algorithm is \blue{conservative}, i.e. it will not allocate resources even if there is possibiliy to allocate them without deadlocking the system. The OS doesn't take chances! With \blue{Time Complexity \(O(n^2)\)}.
+
+\begin{lstlisting}[language=C, caption={Banker's Algorithm}, label={lst:bankers_algorithm}]
+// *Asume* that request R was granted to process q
+cur[q] += R;                            // vector addition
+avail -= R; 
+// Check if the system is in a safe state (i.e. all processes can finish in some order)
+P = ... // All non-terminated processes (processes that are not finished yet)
+while(P is *not* empty){
+    found = false                       // true = found a process that can finish
+    for each p in P {                   // find a process that can finish
+        if (max[p] - cur[p] <= avail) { // can finish? (by maxing its resources)
+            avail += cur[p]             // release resources (pretend p finishes)
+            P.remove(p)
+            found = true
+        }
+    }
+    if (!found) return FAILURE
+}
+return SUCCESS
+\end{lstlisting}
+
+
+
+
+% =====================================================
+% =========== Lecture NETWORKING ======================
+% =====================================================
+
+
+
+\newpage
+\Topic{Networking}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

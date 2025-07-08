@@ -244,6 +244,10 @@ INPUT ../Assets/GangScheduling.png
 INPUT c:/texlive/2024/texmf-dist/fonts/tfm/public/cm/cmti8.tfm
 INPUT c:/texlive/2024/texmf-dist/fonts/tfm/public/cm/cmti7.tfm
 INPUT c:/texlive/2024/texmf-dist/fonts/tfm/public/cm/cmitt10.tfm
+INPUT ../Assets/ResourceGraph.png
+INPUT ../Assets/ResourceGraph.png
+INPUT ../Assets/ResourceGraph.png
+INPUT ../Assets/ResourceGraph.png
 INPUT course material.aux
 INPUT ./course material.out
 INPUT ./course material.out

@@ -1,0 +1,13 @@
+# Ignore all contents of the "Course Summary" directory
+Course Summary/*
+
+# Do not ignore the .tex and .pdf files in "Course Summary"
+!Course Summary/*.tex
+!Course Summary/*.pdf
+
+# Ignore all contents of the "Functions" directory
+Functions/*
+
+# Do not ignore the .tex and .pdf files in "Functions"
+!Functions/*.tex
+!Functions/*.pdf

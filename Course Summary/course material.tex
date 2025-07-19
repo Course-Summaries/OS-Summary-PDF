@@ -1709,6 +1709,78 @@ A completely different architecture, but similar concepts, used in IBM PowerPC p
 \newpage
 \Topic{Interrupts}
 
+\paragraph{Interrupts \& Exceptions} Our intterupts are Intel's interrupts and exceptions, such that: exceptions = internal (synchronous) implicit interrupts, and interrupts = all the rest. There are two sources for intterupts:
+\begin{enumerate}
+  \item \textbf{External / Asynchronous} - Triggered by devices external to the core's compute circuitry. Assynchronous because they can occur at any time.
+
+  \item \textbf{Internal / Synchrounous} - Triggered by the core's compute ciruitry (CPU intructions). Sometimes called "Software interrupts" as they are triggered by the CPU executing an instruction.
+\end{enumerate}
+
+\paragraph{Internal Interrupts} Internal interrupts can be further divided into:
+\begin{itemize}
+  \item \textbf{Explicit} - Triggered by the CPU executing an instruction that deliberately causes an interrupt, such as \code{int} instruction, or \code{syscall} instruction, or \code{Ptrace}-ing.
+
+  \item \textbf{Implicit} - Triggered by the CPU executing an instruction that causes an error or \blue{exception}, such as division by zero, invalid memory access, or illegal instruction. i.e. the CPU can't complete the instruction so it transfers control to the OS. Two types of exceptions:
+  \begin{itemize}
+    \item \textbf{Error condition} tells the OS that the app did something illegal.
+    \item \textbf{Temporary problem} such as a page fault, which can be resolved by the OS.
+  \end{itemize}
+\end{itemize}
+
+
+\paragraph{Interrupt Handling} Each interrupt is associated with a Number (called \blue{interrupt vector}), which is used to identify the \blue{interrupt handler}. Handlers are pointed to by and \blue{\code{array[256]} of pointers-to-functions}. The interrupt handler saves the state of the current running procesess and then executes the handler.
+
+\paragraph{Context Type} If the interrupt is \red{asynchronous} then the kernel is said to be in \blue{interrupt context}, meaning it doesn't server the process that has just been stopped. If the interrupt is \red{synchronous} then the kernel is in \blue{process context} as it needs to provide some service to the process that invoked it.
+
+
+\vspace*{0.5em}
+
+\red{NOTE:} interrupt handlers are not schedulable entities, they run immediately (without invoking the scheduler), unless the interrupt is masked. We can mask using a bitmap, incase of maksing an interrupt the HW will remember at most \red{2} instances of each interrupt that was blocked by the mask (the rest get lost, if they exist).
+
+
+\paragraph{Top \& Bottom Halves} Interrupt handling is often divided into two parts: the \textbf{top half} and the \textbf{bottom half}. The top half is the part of the interrupt handler that runs in response to the interrupt and does the minimal amount of work necessary to handle the interrupt. The bottom half is the part of the interrupt handler that can be deferred and run later, allowing the top half to return quickly and minimize the impact on the system's responsiveness.
+
+
+\paragraph{Resuming an interrupted process} We split to multiple cases:
+\begin{itemize}
+  \item \textbf{Asynchronous (external) interrupts:} Resume in the next process instruction, right after the last instruction that was exectued.
+
+  \item \textbf{Synchronous (=internal) + explicit:} Likewise, resume in the next instruction.
+
+  \item \textbf{Synchronous (=internal) + implicit:} Resume in the \red{same} instruction that caused the HW failure, called \blue{restartable instruction}. For temporal problems the OS will fix the problem, but for error conditions it doesn't make sense so a signal will also be sent to the process.
+\end{itemize}
+
+
+\paragraph{Interrupt handling in multicores} Internal (synchronous) interrupts are always handled by the core that executed the instruction that caused the interrupt. External (asynchronous) interrupts can be handled by any core, so we can do any kind of partition between the cores (static/dynamic/...).
+
+
+\paragraph{Polling} Polling is a technique used to check the status of a device or resource at regular intervals. In the context of interrupts, polling can be used as an alternative to interrupts for handling events. Instead of relying on the hardware to generate interrupts, the CPU actively checks the status of devices and resources to determine if they require attention. This can be useful in situations where interrupts are cause an \blue{interrupt storm} (too many interrupts in a short time), leading to performance degradation. 
+
+
+\paragraph{Interrupt Coalescing} The hardware tries to not create an "interrupt storm" by coalescing multiple events into a single interrupt. And the Software also temporarily switches to polling mode when the flow of incoming intterupts exceeds a certain thershold.
+
+\paragraph{DMA \& interrupts} DMA = Direct memory access, which is when an I/O device can directly read/write to memory without involving the CPU. Conceptually devices fire an interrupt when a DMA operation is finished, not only when reciving (reading) data, but also when sending (writing) data. This allows to notify OS when the send buffer has become free.
+
+
+
+
+
+
+
+
+
+% =====================================================
+% ================= Lecture Storage ===================
+% =====================================================
+
+
+
+\newpage
+\Topic{Storage}
+
+
+
+
 
 
 

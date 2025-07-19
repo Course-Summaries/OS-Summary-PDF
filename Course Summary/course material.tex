@@ -752,7 +752,7 @@ Detailed explanation about alternative slots and slot unification:
 
 \paragraph{Connection Between RR \& SJF} \textbf{Assume:} (1) A single core system (2) All jobs arrive together \gray{(and only use CPU, no I/O)} (3) Quantum is uniform + \red{no} context switch overhead. \textbf{Then:}
 \begin{equation*}
-  \text{avgResponse}(\text{RR}) \leq \text{avgResponse}(\text{SJF})
+  \text{avgResponse}(\text{RR}) \leq 2\cdot \text{avgResponse}(\text{SJF})
 \end{equation*}
 i.e. RR at best is as good as SJF, and at worst is \(2X\) slower.
 
@@ -1455,7 +1455,7 @@ We will focus on Ethernet, which is the most common LAN technology.
 \paragraph{IP address structure} An IP consists of two parts: \textbf{\blue{Subnet} Part} (high order bits) and \textbf{\blue{Host} Part} (low order bits). The subnet part identifies the network, while the host part identifies the specific device within that network. The subnet part is determined by the \textbf{subnet mask}, which is a 32-bit number that specifies how many bits are used for the subnet part and how many bits are used for the host part. An IP address is \red{always} coupled with a subnet mask; e.g. \code{192.168.1.1/24} means that the first 24 bits are the subnet part and the last 8 bits are the host part. \textbf{Meaning of subnet} is that all devices in the same subnet can communicate with each other directly, without going through a router. i.e. it defines the boundaries of the Ethernet LAN.
 
 
-\paragraph{ARP (Address Resolution Protocol):} \blue{IP => MAC} \\
+\paragraph{ARP (Address Resolution Protocol):} \blue{IP \(\Longrightarrow\) MAC} \\
 ARP is a protocol used to map IP addresses to MAC addresses. When a device wants to communicate with another device on the same local network, it needs to know the MAC address of the destination device. If it only knows the IP address, it \blue{broadcasts} an ARP query packet (containing the destination IP and -1 as the MAC) to the local network, asking "Who has IP address X.X.X.X? Tell me your MAC address." The device with the matching IP address responds with its MAC address, allowing the sender to encapsulate the data in a frame and send it to the correct destination. If the destination is not on the same local network, the sender will get the MAC to \textbf{its default gateway (router)}, its first-hop router, which will then forward the packet to the correct destination network.
 
 \paragraph{NAT (Network Address Translation):} \gray{private IPs} \\
@@ -1463,7 +1463,7 @@ NAT is a technique used to allow multiple devices on a local network to share a 
 
 
 \paragraph{DHCP (Dynamic Host Configuration Protocol):} \blue{get an IP} \\
-DHCP is a \red{L5 protocol} used to dynamically assign IP addresses to devices on a network. The goal of DHCP server is to \blue{allow client's host to dynamically get IP address when joining LAN}, which can provide: (1) subnet mask, (2) Default gateway (first hop router), (3) Name + IP of DNS server. DHCP uses \textbf{UDP} to communicate allowing the ability to broadcast to all hosts in LAN. When a device connects to a network, it sends a DHCP request to the DHCP server, which responds with an available IP address and other configuration information. 
+DHCP is an \red{L5 protocol} used to dynamically assign IP addresses to devices on a network. The goal of DHCP server is to \blue{allow client's host to dynamically get IP address when joining LAN}, which can provide: (1) subnet mask, (2) Default gateway (first hop router), (3) Name + IP of DNS server. DHCP uses \textbf{UDP} to communicate allowing the ability to broadcast to all hosts in LAN. When a device connects to a network, it sends a DHCP request to the DHCP server, which responds with an available IP address and other configuration information. 
 
 
 
@@ -1471,13 +1471,246 @@ DHCP is a \red{L5 protocol} used to dynamically assign IP addresses to devices o
 
 
 % =====================================================
-% =========== Lecture Virtual Memory ======================
+% =========== Lecture Virtual Memory ==================
 % =====================================================
 
 
 
 \newpage
 \Topic{Virtual Memory}
+
+\red{NOTE:} ALWAYS say if you are talking about \textbf{physical memory} (RAM) or \textbf{virtual memory} in your answers.
+
+\section*{Virtual Memory Concepts}
+
+\paragraph{Virtual Memory} Virtual memory is the abstraction of physical memory, allowing processes to "think" they have access to the entire memory space, even if the physical memory is limited. The motivation for virtual memory (vmem): 
+\begin{itemize}
+  \item \textbf{Per-Program Contiguous Memory Illusion:} Each process has its own virtual address space, which is contiguous simplifying memory management and allowing processes to use the same address space without conflicts.
+  
+  \item \textbf{Isolation:} Virtual memory provides isolation between processes, ensuring that one process cannot access the memory space of another process. 
+  
+  \item \textbf{Dynamic Growth:} Virtual memory allows processes to grow their heap/stack (and \code{mmap} regions) as needed.
+  
+  \item \textbf{Illusion of Large Memory:} Virtual memory allows processes to use more memory than is physically available. Allowing for memory \blue{overcommitment}. 
+  
+  \item \textbf{Access Control} Deciding if individual memory chunks (pages) can be read/written/executed.
+\end{itemize}
+
+
+\paragraph{Terminology} \textbf{Virtual Address (VA)} is the address used by a process (\& programmer) to access its own memory space, the CPU processes VAs. \textbf{Physical Address (PA)} is the actual address in RAM where data is stored. \textbf{Page} = chunk of contiguous data (in virutal or physical space), \textbf{Frame} = physical memory exactly big enough to hold one page. \blue{\(|\text{Page}|=|\text{Frame}|=2^k\)}, typically \blue{4KB (k=12)}.
+
+
+\paragraph{The basic idea} The OS maps virtual addresses to physical addresses using a \textbf{page table}, such that VA spaces are contiguous. Pages can be mapped to: (1) memory, (2) disk, (3) unallocated yet \gray(allocated on-demand).all programs are written using VAs, OS sets the VA\(\Longrightarrow\)PA mapping (governs control plane), HW does on-the-fly translation from VA to PA (governs data plane). 
+
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=0.6\textwidth]{page-table.png}
+  \caption{Virtual Memory Page Table}
+\end{figure}
+
+
+The basic premise of \textbf{page tables} is that each process has its own page table, which maps virtual pages to physical frames. Using the virtual page number (VPN) we check the page table entry \blue{(PTE)} associated with it to find the physical frame number (PFN) it is mapped to, in addition to other flags. One important flag is the \textbf{valid bit}, which indicates whether the page is currently mapped to a physical frame or not. If the valid bit is set, the page is mapped to a physical frame, and the OS can access it. If the valid bit is not set, then if all other bits are zero it means the page has \red{not} been allocated yet. Otherwise it means it resides on the disk in the written address. 
+
+
+
+\paragraph{Memory Access steps} the following is the basis of how the CPU accesses memory:
+\begin{lstlisting}[language=C, caption={Memory Access Steps in Virtual Memory}, label={lst:memory_access}]
+if (valid == 1)                       // Otherwise HW raises a page fault interrupt
+    page is in main memory @ PA stored in table \(\Longrightarrow\) data can be used
+else if (page resides on disk)        // "Major" page fault
+    OS suspends process
+    Fetches page from disk and adds VA\(\Longrightarrow\)PA mapping to page table
+    Resumes process, which will re-execute faulting instruction
+else if (should be but still is not allocated ||
+         in page cache but not in page table) // "Minor" page fault
+    OS allocates page if needed & adds VA\(\Longrightarrow\)PA mapping to page table
+else if (some other legal situations for which OS is responsible)
+    Resolve (example: CoW; see later)
+else                          // process performed an illegal memory ref
+    OS (which handles the page fault interrupts) delivers a signal
+    (SIGSEGV/SIGBUS) to the offending process
+    The matching signal handler terminates process by default
+\end{lstlisting}
+
+If access type is incompatible with specified access rights, then a protection violation fault happens raising an interrupt, which the OS resolves if it is its fault, or delivers a signal to the offending process.
+
+
+\paragraph{Major Page Fault Flow} Major = need to fetch page from disk.
+\begin{enumerate}
+  \item \textbf{CPU detects} the situation (valid bit = 0)
+  \item \textbf{CPU generates interrupt} and transfers control to the OS
+  \item \textbf{OS regains control}, realizes page is on drive, initiates I/O read ops
+  \item \textbf{OS suspends the process} \& context switches to another process
+  \item \textbf{Upon read completion}, OS makes the process runnable again
+  \item When the \textbf{process is scheduled} again, it re-executes the faulting instruction (which will succeed this time)
+\end{enumerate}
+
+
+\paragraph{Minor Page Fault} Minor = NO need to go to drive to resolve.
+Examples: (1) \textbf{CoW (Copy on Write)} which is used to implement fork for example, (2) \textbf{Demand-based (Lazy) memory allocation}, (3) reading a file content that already is found in the \textbf{page cache}, possibly by other processes.
+
+\paragraph{Page in \& out} a chunk of data: \textbf{Paging} is the process of swapping pages in and out of physical memory to disk storage.
+$$
+\text{Page in} \Longleftrightarrow \text{Copy page from disk to DRAM (read)}
+$$
+$$
+\text{Page out} \Longleftrightarrow \text{Copy page from DRAM to disk (write)}
+$$
+
+
+\paragraph{mmap syscall} The \code{mmap} syscall is used in one of two ways: (1) map a given file to a given virtual address range in the process's memory space. (2) allocate a new \gray{annonymous} memory region in the process's memory space. 
+\begin{enumerate}
+  \item \textbf{Named Pages:} When mapping a file, the OS maps the file's as if it was an "array of bytes" (backed by the disk) in the VA space of the process. Reads/writes to the mapped region will read/write the file's content, and the OS will update the file accordingly every few seconds, in batches. To force the OS to write the changes to disk, the process can use \code{fsync(fd)} syscall. This helps making programming easier, and saves on the overhead of syscalls to \code{read}/\code{write} \gray(as reads/writes to the \code{mmap} are equivalent to memory reading/writing), which in turn saves on I/O copying.
+
+  \item \textbf{Anonymous Pages:} are heap/stack pages, or pages of \code{mmap} with \blue{\code{fd=-1}, \code{flag=MAP\_ANONYMOUS}} which are \red{not} backed by any file/disk. i.e. we can implement \code{malloc} using \code{mmap} \gray{(for heap we use} \blue{sbrk} \gray{syscall)}.
+\end{enumerate}
+We also divide the \code{mmap} pages into two types: (1) \textbf{MAP\_SHARED} = changes affect the actual file (\& visible to other processes), (2) \textbf{MAP\_PRIVATE} = changes don't affect the actual fiile; rather, there will be a CoW for the process (other processes will not see changes)
+
+\paragraph{Swapping} \textbf{Swap Space} is a disk area where anonymous pages are written, if the OS decided they have no room in DRAM (memory is full). Pages are said to be "swapped out" when this occurs (and "swapped in" on return). Nowadays we don't distinguish between the terms swapping and paging.
+
+
+\paragraph{On-demand Paging} A memory management technique where pages are loaded into memory only when they are needed, rather than preloading all pages at once. i.e. pages are allocated/brought into DRAM only when the process attempts to access it for the first time (resulting in a page fault)
+
+\paragraph{Readahead Prefetching} When \code{read()} identifies sequential accesses to file, the \code{read()} reads ahead pages not yet requested, prefetching them, so they would be ready, in an attempt to minimize page faults. (same with the on-demand paging page fault handler)
+
+
+\paragraph{TLB (Translation Lookaside Buffer)} The TLB is a cache used by the CPU to reduce the time taken to access memory locations. It stores recent translations of virtual memory addresses to physical memory addresses, allowing the CPU to quickly find the physical address corresponding to a virtual address without having to go through the entire page table. When a virtual address is accessed, the CPU first checks the TLB; if the translation is found (a TLB hit), the physical address is retrieved quickly. If not (a TLB miss), the CPU must consult the page table, which is slower. TLBs are typically small and fast, and they use various replacement policies to manage the limited space. 
+
+Typically, HW fills TLB automatically by reading the page table on its own (without SW help), and OS invalidates TLB entries (upon context switches, for non-global entries).
+
+
+\paragraph{Page Replacement Algorithms} using an intelligent page replacement policy helps with virtual memory performance:
+\begin{itemize}
+  \item \textbf{Belady - Optimal} - (theoretical) Replace the page that will not be used for the longest period of time in the future. 
+
+  \item \textbf{LRU (least recently used)} - (impractical) Replace the page that has not been used for the longest period of time in the past. 
+
+  \item \textbf{Clock} - (practical LRU) A circular list of pages in memory, where each page has a reference bit. When a page is accessed, its reference bit is set to 1. When a page needs to be replaced, the algorithm checks the pages in a circular manner, clearing the reference bit of each page until it finds a page with a reference bit of 0, which is then replaced.
+
+  \item \textbf{NRU (not recently used)} - (practical more sophisticated LRU) Keep to bits for each page, dirty \& referenced, and periodically turn off referenced (as in clock). Replace victim page with the lowest class from the following: (class 0) not referenced, not dirty, (class 1) not referenced, dirty, (class 2) referenced, not dirty, (class 4) referenced, dirty. Can enhance further by keeping a counter (\code{active}) and incrementing periodically for pages that are referenced, and decrementing periodically. Instead of referenced we will split to active and not active (two lists) by a threshold. 
+\end{itemize}
+
+
+
+
+
+\noindent\rule{\linewidth}{0.4pt}
+
+
+\section*{Virtual Memory Implementation}
+
+\subsection*{Intel x86 Architecture}
+
+\paragraph{32-bit x86 address translations} 32-bit address means \(2^{32}\) virtual addresses, which is \blue{4GB} of virtual memory space. The virtual address space is divided into pages, typically \(4KB\) in size. The page table maps these virtual pages to physical frames in memory.
+
+\vspace*{0.5em} 
+
+The job of the x86 virtual memory subsystem is to translate 20-bits (=virtual page number - VPN) to 20-bits (= physical frame - PFN). Every process holds a \textbf{Page Directory} (= 4KB page) holding 1024 PDEs (page directory entries) each containing a pointer to a \textbf{Page Table} (= 4KB page) holding 1024 PTEs (page table entries) each containing a point to a \textbf{Page Frame} (= 4KB page). The offset is the last 12 bits of the virtual address, which is used (as is) to access the data in the page frame (same offset).
+
+\vspace*{0.5em} 
+
+Each PDE/PTE holds additional flags, such as \textbf{P}resent, \textbf{A}ccessed, \textbf{D}irty, \textbf{U}ser, \textbf{W}riteable, Cache \textbf{D}isabled, etc. 
+
+\paragraph{CR3 Register} The CR3 register holds the \red{physical address} of the page directory for the currently running process. When a context switch occurs, the operating system updates the CR3 register to point to the new process's page directory. (Or more generally, the CR3 register holds the physical address of the first layer of page tables).
+
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.6\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{PTE-format.png}
+        \caption{Page Table Entry Format for x86.}
+        \label{fig:PTE-format}
+    \end{subfigure}
+    \hfill % This creates a horizontal space between the images
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{32bit-virtual.png}
+        \caption{32-bit Page Tables}
+        \label{fig:32bit-virtual}
+    \end{subfigure}
+\end{figure}
+
+
+\paragraph{Global + User/Supervisor bits} The "user/supervisor" bit is used to indicate that only the OS (ring 0) can access the page, while user processes (ring 3) cannot. The "global" bit is used to indicate that the page is shared across all processes and should not be flushed from the TLB on context switches. This is used to implement shared kernel space across all memory spaces. 
+
+
+\paragraph{HW/OS Cooperation} HW defines the data structures (hierarchy, PTE bits, etc.). While the OS determines most of the content of page directories \& page tables (setting the values \& mappings). The HW sets the bits of dirty and accessed, and does the \blue{table walk} automatically:
+\begin{enumerate}
+  \item If VA\(\Longrightarrow\)PA translation not found in TLB, "TLB miss"
+  \item HW knows where to find the root page directory (CR3 register)
+  \item HW walks the tables, hierarchially, until it reaches the data page
+  \item It inserts the VA\(\Longrightarrow\)PA mapping into the TLB
+\end{enumerate}
+The HW populates the TLB, and the OS invalidates TLB entries when needed (e.g. on context switches, or when a page is evicted from memory). The OS is also responsible for Synchronizing between TLBs of different cores (TLB shootdown).
+
+
+\subsection*{64-bit x86 address translations}
+\paragraph{64-bit x86 address translations} 64-bit address means \(2^{64}\) physical addresses, which is \blue{16 Exabytes} of physical memory space. The virtual address is only 48-bits, which is \(2^{48}\) virtual addresses, which is \blue{256TB} of virtual memory space. The page size is still \(4KB\), but the PTE is now 8 bytes (64 bits) instead of 4 bytes (32 bits). The page table structure is similar to the 32-bit x86 architecture, but with additional levels of indirection.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{64bit-tables.png}
+    \caption{64-bit Page Tables}
+\end{figure}
+
+
+
+\paragraph{Increased TLB convergence} To make the TLB more useful we use two concepts:
+\begin{itemize}
+  \item TLB hierarchy: We use multiple TLB caches (like the L1, L2, ...) each bigger but slower than the last. Usually we use only two levels.
+  
+  \item \textbf{Superpages/Hugepages:} Different sizes are supported by different architectures;
+  \begin{itemize}
+    \item 32-bit x86: 4KB, 4MB pages
+    \item 64-bit x86: 4KB, 2MB, 1GB pages
+  \end{itemize}
+  We merge the last \(N\) levels of page table bits in the VA into one offset of the superpage, allowing us to have fewer page table levels but larger pages.
+\end{itemize}
+
+
+\subsection*{64-BIT Power-PC (PPC) Virtual Memory}
+
+A completely different architecture, but similar concepts, used in IBM PowerPC processors. 
+
+
+\paragraph{3 Address Types} effective \(Longrightarrow\) virutal \(Longrightarrow\) real
+\begin{itemize}
+  \item \textbf{Effective:} Each process uses \blue{64-bit} effective addresses, which are not unique across processes. The equivalent of virtual addresses in x86.
+  \item \textbf{Virtual:} A huge \blue{80-bit} address space, which is unique and shared by all processes. If two processes have the same effective address, they will can different virtual addresses, but if they have the same virtual address, they will have the same real address.
+  \item \textbf{Real:} The actual physical address in memory, which is \blue{62-bit} addresses.
+\end{itemize}
+
+\paragraph{PPC Segments} Effective \& virtual spaces are partitioned into \textbf{segments}, which are \blue{256MB} in size. Each segment is contiguous in the per-process effective address space, and each segment is contiguous in the virtual address space. 
+
+
+\paragraph{PPC SLB (Segment Lookaside Buffer)} The SLB is a cache used to speed up the translation of effective addresses to virtual addresses. \red{OS} manages the SLB, and HW searches the SLB for the effective address. Upon a miss, the OS is notified, and it will insert right segment table entry (STE) to SLB. Upon context switch, the OS invalidates the SLB entries. 
+
+\paragraph{PPC TLB (Translation Lookaside Buffer)} The TLB is a cache used to speed up the translation of virtual addresses to real addresses. The TLB is managed by both OS \& HW. The virtual addresses are shared so no need to invalidate the TLB upon context switch.
+
+\paragraph{PPC ERAT (Effective-to-Real Address Translation)} The ERAT is a cache used to speed up the translation of effective addresses to real addresses. Analogous to the TLB (in x86). 
+
+\paragraph{PPC HTAB (Hash Table)} The HTAB is a hash table used to store the mappings between virtual addresses and physical addresses. Each PTE contains both PPN \& VPN, and the OS uses a hash function to map the VPN to a PPN. PTEs are divided into \textbf{PTEG} (Page Table Entry Groups), each containing 16 PTEs. Each PTE can either reside in a "primary" or a "secondary" PTEG. If a PTE is missing, a page-fault interrupt is raised, and the OS will place the PTE in either the primary or secondary PTEG.
+
+
+
+
+
+
+
+
+% =====================================================
+% =============== Lecture Interrupts ==================
+% =====================================================
+
+
+
+\newpage
+\Topic{Interrupts}
+
+
+
 
 
 

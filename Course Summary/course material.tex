@@ -21,7 +21,10 @@
 \usepackage{amsmath}
 
 
-\usepackage[dvipsnames]{xcolor}
+
+\usepackage[dvipsnames, table]{xcolor}
+
+
 
 
 % =====================================================
@@ -35,6 +38,13 @@
 \newcommand{\purple}[1]{\textcolor{Purple}{#1}}
 \newcommand{\orange}[1]{\textcolor{BurntOrange}{#1}}
 
+\definecolor{tableHeaderBlue}{HTML}{4F81BD}
+\definecolor{tableCellGray}{HTML}{F2F2F2}
+\definecolor{tableTextGray}{HTML}{808080}
+\definecolor{tableArrowRed}{HTML}{C00000}
+
+
+\definecolor{textcolor}{HTML}{1E293B}
 
 % =====================================================
 % ============== Listings Formats =====================
@@ -132,54 +142,54 @@
 \paragraph{Operating System (OS)}%
 An Operating System's job is:
 \begin{itemize}
-    \item Coordinate the execution of all SW, mainly user apps.
-    \item Provide various common services needed by users \& apps.
-    \item An OS of a physical server controls its physical devices, e.g. CPU, memory, disks, etc.
-    \item An OS of a virtual server only \textit{believes} it does. There's another OS underneath, called \textbf{hypervisor} which fakes it.
+  \item Coordinate the execution of all SW, mainly user apps.
+  \item Provide various common services needed by users \& apps.
+  \item An OS of a physical server controls its physical devices, e.g. CPU, memory, disks, etc.
+  \item An OS of a virtual server only \textit{believes} it does. There's another OS underneath, called \textbf{hypervisor} which fakes it.
 \end{itemize}
 
 \vspace{1em}
 \noindent Using an OS allows us to take advantage of \textbf{\textit{"virtualization"}}:
 \begin{itemize}
-    \item \textbf{Server Consolidation:} Run multiple servers on one physical server. This is allows for better resource utilization, smaller spaces, and less power consumption.
-    \item \textbf{Disentangling SW from HW:} allows for backing up/restoring, live migration, and HW upgrade. This give us the advantage of easier provisioning of new (virtual) servers = "virtual machines", and easier OS-level development and testing.
+  \item \textbf{Server Consolidation:} Run multiple servers on one physical server. This is allows for better resource utilization, smaller spaces, and less power consumption.
+  \item \textbf{Disentangling SW from HW:} allows for backing up/restoring, live migration, and HW upgrade. This give us the advantage of easier provisioning of new (virtual) servers = "virtual machines", and easier OS-level development and testing.
 \end{itemize}
 
 \vspace{1em}
 Most importantly, an OS is \textbf{reactive}, "event-driven" system, which means it waits for events to happen and then reacts to them. This is in contrast to typical programs which run from start to end without waiting for external events to occur to invoke them.
 
 \begin{center}
-    \rowcolors{2}{gray!15}{white}
-    \begin{tabular}{|>{\raggedright\arraybackslash}p{4.5cm}
-        |>{\raggedright\arraybackslash}p{6.5cm}
-        |>{\raggedright\arraybackslash}p{5.5cm}|}
-        \hline
-        \rowcolor{blue!30}
-         & \textbf{Typical Programs}                                                    & \textbf{OS} \\
-        \hline
-        \textbf{What does it typically do?}
-         & Get some input, do some processing, produce output, terminate
-         & Waits \& reacts to ``events''                                                              \\
-        \hline
-        \textbf{Structure}
-         & Has a \texttt{main} function, which is (more or less) the entry point
-         & No \texttt{main}; multiple entry points, one per event                                     \\
-        \hline
-        \textbf{Termination}
-         & End of \texttt{main}
-         & Power shutdown                                                                             \\
-        \hline
-        \textbf{Typical goal}
-         & $\sim$ Finish as soon as possible
-         & Handle events as quickly as possible $\Rightarrow$ more time for apps to run               \\
-        \hline
-    \end{tabular}
+  \rowcolors{2}{gray!15}{white}
+  \begin{tabular}{|>{\raggedright\arraybackslash}p{4.5cm}
+    |>{\raggedright\arraybackslash}p{6.5cm}
+    |>{\raggedright\arraybackslash}p{5.5cm}|}
+    \hline
+    \rowcolor{blue!30}
+     & \textbf{Typical Programs}                                                    & \textbf{OS} \\
+    \hline
+    \textbf{What does it typically do?}
+     & Get some input, do some processing, produce output, terminate
+     & Waits \& reacts to ``events''                                                              \\
+    \hline
+    \textbf{Structure}
+     & Has a \texttt{main} function, which is (more or less) the entry point
+     & No \texttt{main}; multiple entry points, one per event                                     \\
+    \hline
+    \textbf{Termination}
+     & End of \texttt{main}
+     & Power shutdown                                                                             \\
+    \hline
+    \textbf{Typical goal}
+     & $\sim$ Finish as soon as possible
+     & Handle events as quickly as possible $\Rightarrow$ more time for apps to run               \\
+    \hline
+  \end{tabular}
 \end{center}
 
 \paragraph{Event Synchronousation} OS events can be classified into two:
 \begin{itemize}
-    \item \textbf{Asynchronous interrupts:} keyboard, mouse, network, disk, etc. These are events that can happen at any time and the OS must be ready to handle them.
-    \item \textbf{Synchronous:} system calls, divide by zero, page faults, etc. These are events that happen as a result of the program's execution and the OS must handle them immediately.
+  \item \textbf{Asynchronous interrupts:} keyboard, mouse, network, disk, etc. These are events that can happen at any time and the OS must be ready to handle them.
+  \item \textbf{Synchronous:} system calls, divide by zero, page faults, etc. These are events that happen as a result of the program's execution and the OS must handle them immediately.
 \end{itemize}
 
 
@@ -190,13 +200,13 @@ Multiplexing is the ability of an OS to share a single resource (e.g. CPU, memor
 
 Notable services provided by an OS:
 \begin{enumerate}
-    \item \textbf{Isolation:} Allow multiple processes to coexist using the same resources without stepping on each other's toes.
-          Usually achieved by multiplexing the CPU, memory, and other resource done by the OS. However, some physical resources know how to multiplex themselves, e.g. network cards, sometimes called \textit{"self-virtualizing devices"}.
-    \item \textbf{Abstraction:} Provides convenience \& portability by:
-          \begin{itemize}
-              \item offering more meaningful, higher-level interfaces
-              \item hiding HW details, making interaction wiht HW easier.
-          \end{itemize}
+  \item \textbf{Isolation:} Allow multiple processes to coexist using the same resources without stepping on each other's toes.
+        Usually achieved by multiplexing the CPU, memory, and other resource done by the OS. However, some physical resources know how to multiplex themselves, e.g. network cards, sometimes called \textit{"self-virtualizing devices"}.
+  \item \textbf{Abstraction:} Provides convenience \& portability by:
+        \begin{itemize}
+          \item offering more meaningful, higher-level interfaces
+          \item hiding HW details, making interaction with HW easier.
+        \end{itemize}
 \end{enumerate}
 
 
@@ -210,28 +220,28 @@ Notable services provided by an OS:
 \section*{Processes}
 
 \begin{center}
-    \begin{minipage}[t]{0.6\textwidth}
-        \vspace{0pt} % force top alignment
-        Each process is an instance of a program in execution, which includes:
-        \begin{itemize}
-            \item \textbf{Program code:} The actual code of the program.
-            \item \textbf{Process state:} The current state of the process, including the program counter, registers, and memory management information.
-            \item \textbf{Process control block (PCB):} A data structure used by the OS to manage the process, containing information such as process ID, process state, CPU registers, memory management information, and I/O status information.
+  \begin{minipage}[t]{0.6\textwidth}
+    \vspace{0pt} % force top alignment
+    Each process is an instance of a program in execution, which includes:
+    \begin{itemize}
+      \item \textbf{Program code:} The actual code of the program.
+      \item \textbf{Process state:} The current state of the process, including the program counter, registers, and memory management information.
+      \item \textbf{Process control block (PCB):} A data structure used by the OS to manage the process, containing information such as process ID, process state, CPU registers, memory management information, and I/O status information.
 
-                  A process \ul{doesn't have direct access to its PCB}, it is managed by the OS (kernel space), i.e. needs privilege level 0 (kernel mode) to access it.
+            A process \ul{doesn't have direct access to its PCB}, it is managed by the OS (kernel space), i.e. needs privilege level 0 (kernel mode) to access it.
 
-                  Each PCB contains: \code{real\_parent}, \code{parent}, \code{children}, \code{siblings},...\\
-                  Each process has a \code{task\_struct current} pointer to its PCB.
+            Each PCB contains: \code{real\_parent}, \code{parent}, \code{children}, \code{siblings},...\\
+            Each process has a \code{task\_struct current} pointer to its PCB.
 
-            \item \textbf{Process ID (PID):} A unique identifier assigned to each process by the OS. The PID is used by the OS to manage the process and is used in system calls to refer to the process.
-        \end{itemize}
-    \end{minipage}%
-    \hspace{1em}
-    \begin{minipage}[t]{0.35\textwidth}
-        \vspace{0pt} % force top alignment
-        \centering
-        \includegraphics[width=\linewidth]{../Assets/process_memory.png}
-    \end{minipage}
+      \item \textbf{Process ID (PID):} A unique identifier assigned to each process by the OS. The PID is used by the OS to manage the process and is used in system calls to refer to the process.
+    \end{itemize}
+  \end{minipage}%
+  \hspace{1em}
+  \begin{minipage}[t]{0.35\textwidth}
+    \vspace{0pt} % force top alignment
+    \centering
+    \includegraphics[width=\linewidth]{../Assets/process_memory.png}
+  \end{minipage}
 \end{center}
 
 
@@ -239,19 +249,19 @@ Notable services provided by an OS:
 \paragraph{Process States}
 A process can be in one of the following states:
 \begin{itemize}
-    \item \textbf{Running:} The process is currently being executed by the CPU.
-    \item \textbf{Ready:} The process is ready to be executed but is waiting for the CPU to become available.
-    \item \textbf{Waiting:} The process is waiting for an event to occur, such as I/O completion or a signal.
-    \item \textbf{Zombie:} The process has terminated but its PCB is still in the system, waiting for the parent process to read its exit status. In this state, the process has released almost all of its resources, but \blue{the PCB is still in the system}.
+  \item \textbf{Running:} The process is currently being executed by the CPU.
+  \item \textbf{Ready:} The process is ready to be executed but is waiting for the CPU to become available.
+  \item \textbf{Waiting:} The process is waiting for an event to occur, such as I/O completion or a signal.
+  \item \textbf{Zombie:} The process has terminated but its PCB is still in the system, waiting for the parent process to read its exit status. In this state, the process has released almost all of its resources, but \blue{the PCB is still in the system}.
 \end{itemize}
 
 
 
 \begin{figure}
-    \centering
-    \includegraphics[width=0.8\textwidth]{../Assets/process_states.png}
-    \caption{Process States}
-    \label{fig:process_states}
+  \centering
+  \includegraphics[width=0.8\textwidth]{../Assets/process_states.png}
+  \caption{Process States}
+  \label{fig:process_states}
 \end{figure}
 
 
@@ -269,13 +279,13 @@ As noted above, each process must be \code{wait()}ed for by its parent process t
 
 \paragraph{Process Management} The OS offers various system calls to manage processes, including: \gray{(More details in the functions reference)}
 \begin{itemize}
-    \item \texttt{fork()}: Creates a new process by duplicating the calling process. The new process is called the child process, and the calling process is called the parent process.
-    \item \texttt{exec()}: Replaces the current process image with a new process image, effectively running a different program in the same process.
-    \item \texttt{wait()}: Suspends the calling process until one of its children terminates.
-    \item \texttt{exit()}: Terminates the calling process and releases its resources.
-    \item \texttt{getpid()}: Returns the process ID of the calling process.
-    \item \texttt{getppid()}: Returns the process ID of the parent process.
-    \item \texttt{kill()}: Sends a signal to a process, which can be used to terminate or suspend the process.
+  \item \texttt{fork()}: Creates a new process by duplicating the calling process. The new process is called the child process, and the calling process is called the parent process.
+  \item \texttt{exec()}: Replaces the current process image with a new process image, effectively running a different program in the same process.
+  \item \texttt{wait()}: Suspends the calling process until one of its children terminates.
+  \item \texttt{exit()}: Terminates the calling process and releases its resources.
+  \item \texttt{getpid()}: Returns the process ID of the calling process.
+  \item \texttt{getppid()}: Returns the process ID of the parent process.
+  \item \texttt{kill()}: Sends a signal to a process, which can be used to terminate or suspend the process.
 \end{itemize}
 
 \paragraph{Parent Vs. Real Parent Process}
@@ -302,7 +312,7 @@ Daemon names usually end with the letter "d", e.g. \texttt{sshd} (SSH daemon), \
 \paragraph{Signals}
 Signals are "notifications" sent to a process to asynchronously notify it that some event has occurred.
 
-* Receiving a signal only occurs then returning from kernel mode, which in turn invokes the corresponding signal handler.
+* Receiving a signal only occurs when returning from kernel mode, which in turn invokes the corresponding signal handler.
 
 ** Default signal handling actions: Either die or ignore
 
@@ -313,9 +323,9 @@ Signals are "notifications" sent to a process to asynchronously notify it that s
 
 Each signal has a name, a number, and a default action. All but 3 signals can be blocked, i.e. ignored until the process is ready to handle them. The 3 signals that cannot be blocked are:
 \begin{itemize}
-    \item \texttt{SIGKILL}: Used to forcefully terminate a process. (Process becomes a zombie)
-    \item \texttt{SIGSTOP}: Used to suspend the receiving process. (Make it sleep) The signals is sent when the user presses Ctrl+Z in the terminal. {\color{gray}Note: In truth Ctrl+Z sends the \texttt{SIGTSTP} signal, however, we don't learn about the differences between the two signals in this course.}
-    \item \texttt{SIGCONT}: Used to resume a suspended process, usually sent after a \texttt{SIGSTOP} signal. The handler for this signal can be customized but it {\color{red}will always} resume the process.
+  \item \texttt{SIGKILL}: Used to forcefully terminate a process. (Process becomes a zombie)
+  \item \texttt{SIGSTOP}: Used to suspend the receiving process. (Make it sleep) The signals is sent when the user presses Ctrl+Z in the terminal. {\color{gray}Note: In truth Ctrl+Z sends the \texttt{SIGTSTP} signal, however, we don't learn about the differences between the two signals in this course.}
+  \item \texttt{SIGCONT}: Used to resume a suspended process, usually sent after a \texttt{SIGSTOP} signal. The handler for this signal can be customized but it {\color{red}will always} resume the process.
 \end{itemize}
 \texttt{SIGSTOP} and \texttt{SIGCONT} are useful for debugging purposes, allowing the user to pause and resume the execution of a process.
 
@@ -332,57 +342,60 @@ A process can block signals using the \texttt{sigprocmask()} system call, which 
 \newpage
 \paragraph{Common Signals} the following are some of the most common signals:
 \begin{enumerate}
-    \item \textbf{\code{SIGSEGV, SIGBUS, SIGIILL, SIGFPE}}: These are driven by the associated \blue{(HW) interrupts} - The OS gets the associated interrupt, then the OS interrupt handler sees to it that the misbehaving process gets the associated signal, lastly the signaly handler is invoked.
-          \begin{itemize}
-              \item \texttt{SIGSEGV}: Segmentation violation (illegal memory reference, e.g., outside an array).
-              \item \texttt{SIGBUS}: Dereference invalid address (null/misaligned, assume it's like SEGV).
-              \item \texttt{SIGILL}: Illegal instruction (trying to invoke privileged instruction).
-              \item \texttt{SIGFPE}: Floating-point exception (despite the name, \textit{all} arithmetic errors, not just floating point. e.g., division by zero).
-          \end{itemize}
+  \item \textbf{\code{SIGSEGV, SIGBUS, SIGIILL, SIGFPE}}: These are driven by the associated \blue{(HW) interrupts} - The OS gets the associated interrupt, then the OS interrupt handler sees to it that the misbehaving process gets the associated signal, lastly the signal handler is invoked.
+        \begin{itemize}
+          \item \texttt{SIGSEGV}: Segmentation violation (illegal memory reference, e.g., outside an array).
+          \item \texttt{SIGBUS}: Dereference invalid address (null/misaligned, assume it's like SEGV).
+          \item \texttt{SIGILL}: Illegal instruction (trying to invoke privileged instruction).
+          \item \texttt{SIGFPE}: Floating-point exception (despite the name, \textit{all} arithmetic errors, not just floating point. e.g., division by zero).
+        \end{itemize}
 
-    \item \textbf{\code{SIGCHLD}}: Parent \gray(not real parent) get it whenver \code{fork()}ed child terminates or is \code{SIGSTOP}-ed.
+  \item \textbf{\code{SIGCHLD}}: Parent \gray(and then real parent) get it whenever \code{fork()}ed child terminates or is \code{SIGSTOP}-ed.
 
-    \item \textbf{\code{SIGALRM}}: Get a signal after some specified time, can be set using the \blue{\code{alarm()} \& \code{setitimer()}} system calls.
+  \item \textbf{\code{SIGALRM}}: Get a signal after some specified time, can be set using the \blue{\code{alarm()} \& \code{setitimer()}} system calls.
 
-    \item \textbf{\code{SIGTRAP}}: When debugging/single-stepping a process, the debugger can set a breakpoint in the code, which will cause the process to receive a \texttt{SIGTRAP} signal when it reaches that point.
+  \item \textbf{\code{SIGTRAP}}: When debugging/single-stepping a process, the debugger can set a breakpoint in the code, which will cause the process to receive a \texttt{SIGTRAP} signal when it reaches that point.
 
-    \item \textbf{\code{SIGUSR1, SIGUSR2}}: User-defined signals, user can decide the meaning of these signals and their handlers.
+  \item \textbf{\code{SIGUSR1, SIGUSR2}}: User-defined signals, user can decide the meaning of these signals and their handlers.
 
-    \item \textbf{\code{SIGPIPE}}: Write to pipe with no readers.
+  \item \textbf{\code{SIGPIPE}}: Write to pipe with no readers.
 
-    \item \textbf{\code{SIGINT}}: Sent when the user presses Ctrl+C in the terminal. The default action is to terminate the process, but it can be customized.
+  \item \textbf{\code{SIGINT}}: Sent when the user presses Ctrl+C in the terminal. The default action is to terminate the process, but it can be customized.
 
-    \item \textbf{\code{SIGXCPU}}: Delivered when a process used up more CPU than its soft-limit allows: soft/hard limits are set using the \blue{\code{setrlimit()}} system call. Soft-limits warn the process its about to exceed the hard-limit, Exceeding the hard-limit will cause \code{SIGKILL} to be sent to the process.
+  \item \textbf{\code{SIGXCPU}}: Delivered when a process used up more CPU than its soft-limit allows: soft/hard limits are set using the \blue{\code{setrlimit()}} system call. Soft-limits warn the process its about to exceed the hard-limit, Exceeding the hard-limit will cause \code{SIGKILL} to be sent to the process.
 
-    \item \textbf{\code{SIGIO}}: Can configure file descriptors such that a signal will be delivered whenever some I/O is ready.
+  \item \textbf{\code{SIGIO}}: Can configure file descriptors such that a signal will be delivered whenever some I/O is ready.
 
-          Typically makes sense when also configuring the file descriptor to be \textit{non-blocking}, e.g., when \code{read()}ing from a non-blocking file descriptor, the system call immediately returns to user if there's currently nothing to read. In this case, \code{errno} will be set to \code{EAGAIN=EWOULDBLOCK}.
+        Typically makes sense when also configuring the file descriptor to be \textit{non-blocking}, e.g., when \code{read()}ing from a non-blocking file descriptor, the system call immediately returns to user if there's currently nothing to read. In this case, \code{errno} will be set to \code{EAGAIN=EWOULDBLOCK}.
+
+
+  \item \textbf{Signal 0:} The null signal, which is used to test for the existence of a process.
 \end{enumerate}
 
 
 \begin{samepage}
-    \begin{center}
-        \textbf{Signals Vs. Interrupts}
-        \rowcolors{2}{gray!15}{white}
-        \begin{tabular}{|>{\raggedright\arraybackslash}p{4.5cm}|>{\raggedright\arraybackslash}p{5.5cm}|>{\raggedright\arraybackslash}p{5.5cm}|}
-            \hline
-            \rowcolor{blue!30}
-             & \textbf{interrupts}                                                                      & \textbf{signals} \\
-            \hline
-            Who triggers them? \newline Who defines their meaning?
-             & Hardware: \newline CPU cores (sync) \& other devices (async)
-             & Software (OS), \newline HW is unaware                                                                       \\
-            \hline
-            Who handles them? \newline Who (un)blocks them?
-             & OS
-             & processes                                                                                                   \\
-            \hline
-            When do they occur?
-             & Both synchronously \& asynchronously
-             & Likewise, but, technically, \newline invoked when returning \newline from kernel to user                    \\
-            \hline
-        \end{tabular}
-    \end{center}
+  \begin{center}
+    \textbf{Signals Vs. Interrupts}
+    \rowcolors{2}{gray!15}{white}
+    \begin{tabular}{|>{\raggedright\arraybackslash}p{4.5cm}|>{\raggedright\arraybackslash}p{5.5cm}|>{\raggedright\arraybackslash}p{5.5cm}|}
+      \hline
+      \rowcolor{blue!30}
+       & \textbf{interrupts}                                                                      & \textbf{signals} \\
+      \hline
+      Who triggers them? \newline Who defines their meaning?
+       & Hardware: \newline CPU cores (sync) \& other devices (async)
+       & Software (OS), \newline HW is unaware                                                                       \\
+      \hline
+      Who handles them? \newline Who (un)blocks them?
+       & OS
+       & processes                                                                                                   \\
+      \hline
+      When do they occur?
+       & Both synchronously \& asynchronously
+       & Likewise, but, technically, \newline invoked when returning \newline from kernel to user                    \\
+      \hline
+    \end{tabular}
+  \end{center}
 \end{samepage}
 
 
@@ -404,44 +417,44 @@ Using several CPU cores (=processors) for running a single job to solve a single
 
 
 \begin{center}
-    \begin{minipage}{0.45\textwidth}
-        \vspace{0pt} % force top alignment
-        \centering
-        \includegraphics[width=\linewidth]{../Assets/thread_stack.png}
-    \end{minipage}\hfill
-    \begin{minipage}{0.5\textwidth}
-        \vspace{0pt} % force top alignment  
-        \paragraph{Threads}
-        A process can have multiple threads, which share (nearly) everything, including the process's memory space, file descriptors, heap, static data, code segment and more.
+  \begin{minipage}{0.45\textwidth}
+    \vspace{0pt} % force top alignment
+    \centering
+    \includegraphics[width=\linewidth]{../Assets/thread_stack.png}
+  \end{minipage}\hfill
+  \begin{minipage}{0.5\textwidth}
+    \vspace{0pt} % force top alignment  
+    \paragraph{Threads}
+    A process can have multiple threads, which share (nearly) everything, including the process's memory space, file descriptors, heap, static data, code segment and more.
 
-        \hspace*{2em}However, each thread has its own stack, registers, and program counter. But they can still access each other's stack since they share the same memory space.
-    \end{minipage}
+    \hspace*{2em}However, each thread has its own stack, registers, and program counter. But they can still access each other's stack since they share the same memory space.
+  \end{minipage}
 \end{center}
 
 Note that \blue{\textit{Global/Static Variables \& Dynamically Allocated Memory}} are shared between threads since they are stored in the Static Data Segment and the Heap, respectively, which are shared between all threads of a process. However, \red{\textit{Local Variables}} are not shared between threads since they are stored in the stack, which is unique to each thread.
 
 
 \begin{samepage}
-    \begin{center}
-        \rowcolors{2}{gray!15}{white}
-        \begin{tabular}{|>{\raggedright\arraybackslash}p{6cm}|
-            >{\centering\arraybackslash}p{4cm}|
-            >{\centering\arraybackslash}p{4cm}|}
-            \hline
-            \rowcolor{blue!30}
-                                             & \textbf{Unique to Process} & \textbf{Unique to pthread} \\
-            \hline
-            Registers (notably PC)           & Y                          & Y                          \\
-            Execution stack                  & Y                          & Y                          \\
-            Memory address space             & Y                          & \red{N}                    \\
-            Open files                       & Y                          & \red{N}                    \\
-            Per-open-file position (=offset) & Y                          & \red{N}                    \\
-            Working directory                & Y                          & \red{N}                    \\
-            User/group credentials           & Y                          & \red{N}                    \\
-            Signal handling                  & Y                          & \red{N}                    \\
-            \hline
-        \end{tabular}
-    \end{center}
+  \begin{center}
+    \rowcolors{2}{gray!15}{white}
+    \begin{tabular}{|>{\raggedright\arraybackslash}p{6cm}|
+      >{\centering\arraybackslash}p{4cm}|
+      >{\centering\arraybackslash}p{4cm}|}
+      \hline
+      \rowcolor{blue!30}
+                                       & \textbf{Unique to Process} & \textbf{Unique to pthread} \\
+      \hline
+      Registers (notably PC)           & Y                          & Y                          \\
+      Execution stack                  & Y                          & Y                          \\
+      Memory address space             & Y                          & \red{N}                    \\
+      Open files                       & Y                          & \red{N}                    \\
+      Per-open-file position (=offset) & Y                          & \red{N}                    \\
+      Working directory                & Y                          & \red{N}                    \\
+      User/group credentials           & Y                          & \red{N}                    \\
+      Signal handling                  & Y                          & \red{N}                    \\
+      \hline
+    \end{tabular}
+  \end{center}
 \end{samepage}
 
 
@@ -449,13 +462,13 @@ Note that \blue{\textit{Global/Static Variables \& Dynamically Allocated Memory}
 \paragraph{OpenMP} Open Multi-Processing (OpenMP) consists of a set of compiler \textit{'pragma'} directives that allows the compiler to generate multi-threaded code for parallel execution.
 
 \begin{center}
-    \begin{minipage}{0.9\textwidth}
-        \begin{lstlisting}
+  \begin{minipage}{0.9\textwidth}
+    \begin{lstlisting}
     #pragma omp parallel for
     for (i = 0; i < N; i++) {
             arr[i] = 2*i;
     } \end{lstlisting}
-    \end{minipage}
+  \end{minipage}
 \end{center}
 
 
@@ -471,34 +484,34 @@ Processes \red{don't} share \code{PCB} nor \code{FDT} but they \blue{can share f
 
 \paragraph{Pipes} A pipe is a unidirectional communication channel between two processes, allowing one process to send data to another. Pipes are a pair of two file descriptors \code{int pipe\_fd[2]}. Each integer is a handle to a kernel communication object, \ul{which is a buffer that holds the data being sent between the two processes}.
 \begin{itemize}
-    \item \code{pipe\_fd[0]} = read side of the communication channel.
-    \item \code{pipe\_fd[1]} = write side of the communication channel.
-    \item Everything written via \code{pipe\_fd[1]} can be read via \code{pipe\_fd[0]}.
-    \item \red{Blocking}: If the read side is empty, the read operation will block until data is written to the write side. If the write side is full, the write operation will block until space is available.
-    \item \red{\code{SIGPIPE}}: Writing to a pipe whose read end is \code{close()}d will result in a \code{SIGPIPE} signal.
+  \item \code{pipe\_fd[0]} = read side of the communication channel.
+  \item \code{pipe\_fd[1]} = write side of the communication channel.
+  \item Everything written via \code{pipe\_fd[1]} can be read via \code{pipe\_fd[0]}.
+  \item \red{Blocking}: If the read side is empty, the read operation will block until data is written to the write side. If the write side is full, the write operation will block until space is available.
+  \item \red{\code{SIGPIPE}}: Writing to a pipe whose read end is \code{close()}d will result in a \code{SIGPIPE} signal.
 \end{itemize}
 
 
 
 \begin{samepage}
-    \begin{center}
-        \rowcolors{2}{gray!15}{white}
-        \begin{tabular}{|>{\raggedright\arraybackslash}p{4cm}|
-            >{\raggedright\arraybackslash}p{6cm}|
-            >{\raggedright\arraybackslash}p{5cm}|}
-            \hline
-            \rowcolor{blue!30}
-            \textbf{Multi-tasking} & \textbf{Multi-programming} & \textbf{Multi-processing} \\
-            \hline
-            Having multiple processes \textit{time slice} on the same CPU core.
-                                   &
-            Having \textit{multiple jobs} in the system (either on the same core or on different cores). \gray{i.e. the existence of multiple processes in the system, regardless of whether they are running on the same core or not.}
-                                   &
-            Using \textit{multiple processors (CPU cores) for the same job} in parallel. \gray{i.e. creating multiple threads to run on different cores for the same process.}
-            \\
-            \hline
-        \end{tabular}
-    \end{center}
+  \begin{center}
+    \rowcolors{2}{gray!15}{white}
+    \begin{tabular}{|>{\raggedright\arraybackslash}p{4cm}|
+      >{\raggedright\arraybackslash}p{6cm}|
+      >{\raggedright\arraybackslash}p{5cm}|}
+      \hline
+      \rowcolor{blue!30}
+      \textbf{Multi-tasking} & \textbf{Multi-programming} & \textbf{Multi-processing} \\
+      \hline
+      Having multiple processes \textit{time slice} on the same CPU core.
+                             &
+      Having \textit{multiple jobs} in the system (either on the same core or on different cores). \gray{i.e. the existence of multiple processes in the system, regardless of whether they are running on the same core or not.}
+                             &
+      Using \textit{multiple processors (CPU cores) for the same job} in parallel. \gray{i.e. creating multiple threads to run on different cores for the same process.}
+      \\
+      \hline
+    \end{tabular}
+  \end{center}
 \end{samepage}
 
 
@@ -509,28 +522,28 @@ Processes \red{don't} share \code{PCB} nor \code{FDT} but they \blue{can share f
 \section*{Intro. Context Switching \& Caching}
 \paragraph{Context Switching} is the process of saving the state of a currently running process and restoring the state of another process to allow it to run. This is done by the OS kernel and is necessary for multitasking, allowing multiple processes to share the CPU.
 \begin{itemize}
-    \item \textbf{Context} = the state of a process, including its registers, program counter, stack pointer, and memory management information.
-    \item \textbf{Context Switch} = the process of saving the context of the currently running process and restoring the context of another process.
+  \item \textbf{Context} = the state of a process, including its registers, program counter, stack pointer, and memory management information.
+  \item \textbf{Context Switch} = the process of saving the context of the currently running process and restoring the context of another process.
 \end{itemize}
 
 \paragraph{Context Switch Overhead} consists of two components:
 \begin{itemize}
-    \item \textbf{Direct Overhead:} The measurable time it takes to perform the context switch, which includes saving the current process's state and restoring the next process's state.
-    \item \textbf{Indirect Overhead:} The time it takes for the CPU to cache the new process's data, which can be significant if the new process's data is not already in the CPU cache.
+  \item \textbf{Direct Overhead:} The measurable time it takes to perform the context switch, which includes saving the current process's state and restoring the next process's state.
+  \item \textbf{Indirect Overhead:} The time it takes for the CPU to cache the new process's data, which can be significant if the new process's data is not already in the CPU cache.
 \end{itemize}
 
 \paragraph{Cashing} The CPU cache is a small, fast memory that stores frequently accessed data to speed up access times. The Cache allows the CPU access to a fast memory that is closer to the CPU than the main memory (DRAM), and a larger one than the CPU registers. The cache works because of the \blue{\textit{Principle of Locality}}:
 \begin{itemize}
-    \item \textbf{Temporal Locality:} If at one point in time a particular memory location is referenced, then it is likely that the same location will be referenced again soon.
-    \item \textbf{Spatial Locality:} If a particular memory location is referenced at a particular time, then it is likely that nearby memory locations will be referenced soon.
+  \item \textbf{Temporal Locality:} If at one point in time a particular memory location is referenced, then it is likely that the same location will be referenced again soon.
+  \item \textbf{Spatial Locality:} If a particular memory location is referenced at a particular time, then it is likely that nearby memory locations will be referenced soon.
 \end{itemize}
 
 
 
 \paragraph{Copy-on-Write (COW)} The \code{fork()} system call creates a copy of the address space of the parent, but:
 \begin{itemize}
-    \item It only creates a \textit{logical} copy.
-    \item There is no physical duplication of the memory pages, until we really need to write to them (from either process). And even then, only the page that is being written to is duplicated. \gray{(More details in the virutal memory lectures)}
+  \item It only creates a \textit{logical} copy.
+  \item There is no physical duplication of the memory pages, until we really need to write to them (from either process). And even then, only the page that is being written to is duplicated. \gray{(More details in the virutal memory lectures)}
 \end{itemize}
 
 
@@ -552,78 +565,78 @@ The usage of ULTs is mainly for concurrent programming, where we want multiple m
 \paragraph{Supercomputers} Supercomputers are compromised of multiple nodes, each with multiple CPU cores, and are used for running large-scale computations. Users submit \textbf{batch jobs} to the supercomputer with a specified time limit and size.
 Terminology:
 \begin{itemize}
-    \item \textbf{Size} = the number of CPU cores to use for the job. Jobs are said to be \textit{wide/big} or \textit{narrow/small}.
+  \item \textbf{Size} = the number of CPU cores to use for the job. Jobs are said to be \textit{wide/big} or \textit{narrow/small}.
 
-    \item \textbf{Runtime} = the time limit for the job to run. Jobs are said to be \textit{short} or \textit{long}.
+  \item \textbf{Runtime} = the time limit for the job to run. Jobs are said to be \textit{short} or \textit{long}.
 \end{itemize}
 
 \paragraph{Metrics for Performance Evaluation}
 When evaluating the performance of a \underline{batch} scheduling algorithm, we use the following metrics:
 \begin{itemize}
-    \item \textbf{Average Wait Time:} The wait time of a job is the interval between the time the job is submitted to the time the job starts to run. i.e.
-          \begin{equation*}
-              \text{waitTime} = \text{startTime} - \text{submitTime}
-          \end{equation*}
+  \item \textbf{Average Wait Time:} The wait time of a job is the interval between the time the job is submitted to the time the job starts to run. i.e.
+        \begin{equation*}
+          \text{waitTime} = \text{startTime} - \text{submitTime}
+        \end{equation*}
 
-    \item \textbf{Average Response Time:} The response time of a job is the interval between the time the job is submitted to the time the job is terminated. i.e.
-          \begin{equation*}
-              \text{responseTime} = \text{terminateTime} - \text{submitTime}
-          \end{equation*}
+  \item \textbf{Average Response Time:} The response time of a job is the interval between the time the job is submitted to the time the job is terminated. i.e.
+        \begin{equation*}
+          \text{responseTime} = \text{terminateTime} - \text{submitTime}
+        \end{equation*}
 
-          \red{\textbf{Note:}} Average wait time and response time differ only by a constant factor, which is the job's average runtime.
+        \red{\textbf{Note:}} Average wait time and response time differ only by a constant factor, which is the job's average runtime.
 
-    \item \textbf{The Slowdown / Expansion Factor:} The ratio between a job's response time and its runtime. i.e.
-          \begin{equation*}
-              \begin{aligned}
-                  \text{slowdown} & = \frac{\text{responseTime}}{\text{runtime}}                \\
-                                  & = \frac{(\text{waitTime} + \text{runtime})}{\text{runtime}} \\
-                                  & = 1 + \frac{\text{waitTime}}{\text{runtime}}
-              \end{aligned}
-          \end{equation*}
+  \item \textbf{The Slowdown / Expansion Factor:} The ratio between a job's response time and its runtime. i.e.
+        \begin{equation*}
+          \begin{aligned}
+            \text{slowdown} & = \frac{\text{responseTime}}{\text{runtime}}                \\
+                            & = \frac{(\text{waitTime} + \text{runtime})}{\text{runtime}} \\
+                            & = 1 + \frac{\text{waitTime}}{\text{runtime}}
+          \end{aligned}
+        \end{equation*}
 
-    \item \textbf{Utilization:} The percentage of time the resource (CPU) is busy.
+  \item \textbf{Utilization:} The percentage of time the resource (CPU) is busy.
 
-    \item \textbf{Throughput:} How much work is done in one time unit.
+  \item \textbf{Throughput:} How much work is done in one time unit.
 \end{itemize}
 
 
 \subsection*{Batch Scheduling Algorithms}
 \begin{center}
-    \begin{minipage}{0.30\textwidth}
-        \vspace{0pt} % force top alignment
-        \centering
-        \includegraphics[width=\linewidth]{FCFS.png}
-    \end{minipage}\hfill
-    \begin{minipage}{0.65\textwidth}
-        \vspace{0pt} % force top alignment 
-        \paragraph{First-Come, First-Served (FCFS)} Jobs are scheduled by their arrival time. If there are enough free cores, a newly arriving job starts to run immediately, otherwise it wait, sorted by arrival time, until enough cores are available.
-        \begin{itemize}
-            \item \textbf{Pros:} Simple to implement (FIFO Queue), fair to all jobs.
-            \item \textbf{Cons:} Creates \textit{\ul{fragmenation}}, small/short jobs might wait a long time.
-        \end{itemize}
-    \end{minipage}
+  \begin{minipage}{0.30\textwidth}
+    \vspace{0pt} % force top alignment
+    \centering
+    \includegraphics[width=\linewidth]{FCFS.png}
+  \end{minipage}\hfill
+  \begin{minipage}{0.65\textwidth}
+    \vspace{0pt} % force top alignment 
+    \paragraph{First-Come, First-Served (FCFS)} Jobs are scheduled by their arrival time. If there are enough free cores, a newly arriving job starts to run immediately, otherwise it wait, sorted by arrival time, until enough cores are available.
+    \begin{itemize}
+      \item \textbf{Pros:} Simple to implement (FIFO Queue), fair to all jobs.
+      \item \textbf{Cons:} Creates \textit{\ul{fragmenation}}, small/short jobs might wait a long time.
+    \end{itemize}
+  \end{minipage}
 \end{center}
 
 \noindent\rule{\linewidth}{0.4pt}
 
 
 \begin{center}
-    \begin{minipage}{0.65\textwidth}
-        \vspace{0pt} % force top alignment
-        \paragraph{EASY Scheduling (= FCFS + backfilling)} Backfilling optimization: A short waiting job can jump over the head of the wait queue (i.e. start at an earlier time) provided that \red{it doesn't delay} the job \@ head of the FCFS queue.\\
+  \begin{minipage}{0.65\textwidth}
+    \vspace{0pt} % force top alignment
+    \paragraph{EASY Scheduling (= FCFS + backfilling)} Backfilling optimization: A short waiting job can jump over the head of the wait queue (i.e. start at an earlier time) provided that \red{it doesn't delay} the job \@ head of the FCFS queue.\\
 
-        The algorithm: whenever a job arrives or terminates, try to start the job \@ head of the FCFS wait queue. Then, iterate over the rest of teh waiting jobs (in FCFS order) and try to backfill them.
+    The algorithm: whenever a job arrives or terminates, try to start the job \@ head of the FCFS wait queue. Then, iterate over the rest of teh waiting jobs (in FCFS order) and try to backfill them.
 
-        \begin{itemize}
-            \item \textbf{Pros:} Better utilization (less fragmentation), short jobs have a better chance of running sooner.
-            \item \textbf{Cons:} Must know runtimes in advance.
-        \end{itemize}
-    \end{minipage}\hfill
-    \begin{minipage}{0.3\textwidth}
-        \vspace{0pt} % force top alignment 
-        \centering
-        \includegraphics[width=\linewidth]{EASY.png}
-    \end{minipage}
+    \begin{itemize}
+      \item \textbf{Pros:} Better utilization (less fragmentation), short jobs have a better chance of running sooner.
+      \item \textbf{Cons:} Must know runtimes in advance.
+    \end{itemize}
+  \end{minipage}\hfill
+  \begin{minipage}{0.3\textwidth}
+    \vspace{0pt} % force top alignment 
+    \centering
+    \includegraphics[width=\linewidth]{EASY.png}
+  \end{minipage}
 \end{center}
 
 \noindent\rule{\linewidth}{0.4pt}
@@ -631,8 +644,8 @@ When evaluating the performance of a \underline{batch} scheduling algorithm, we 
 
 \paragraph{Shortest Job First (SJF)} Instead of ordering jobs by their arrival time, we order them by \blue{their (typically estimated) runtimes}.
 \begin{itemize}
-    \item \textbf{Pros:} \red{Optimal} in terms of performance (min. avg. wait time).
-    \item \textbf{Cons:} Unfair as it may cause \textbf{starvation} of long jobs. \gray{starvation = can theorically wait forever}
+  \item \textbf{Pros:} \red{Optimal} in terms of performance (min. avg. wait time).
+  \item \textbf{Cons:} Unfair as it may cause \textbf{starvation} of long jobs. \gray{starvation = can theorically wait forever}
 \end{itemize}
 
 \noindent\rule{\linewidth}{0.4pt}
@@ -642,24 +655,24 @@ When evaluating the performance of a \underline{batch} scheduling algorithm, we 
 \paragraph{Convoy Effect} Slowing down all \gray{(possibly short)} processes due to currently servicing a very long process. \textit{FCFS} suffers from this effect, as does \textit{EASY} scheduling but to a lesser extent. \textit{SJF} \red{without assumptions} also suffers from this effect but to an even lesser extent.
 
 \begin{samepage}
-    \paragraph{Optimality of SJF} As mentioned above, SJF is optimal in terms of performance, in particular, it minimizes the average wait time. \blue{\textbf{Claim:}}\\
-    Given:
-    \begin{enumerate}
-        \item A 1-core system where all jobs are serial.
-        \item All process arrive together.
-        \item Their runtimes are known in advance.
-    \end{enumerate}
-    Then: \textit{The average wait time of SJF is equal to or less than the average wait time of any other batch scheduling order.}
+  \paragraph{Optimality of SJF} As mentioned above, SJF is optimal in terms of performance, in particular, it minimizes the average wait time. \blue{\textbf{Claim:}}\\
+  Given:
+  \begin{enumerate}
+    \item A 1-core system where all jobs are serial.
+    \item All process arrive together.
+    \item Their runtimes are known in advance.
+  \end{enumerate}
+  Then: \textit{The average wait time of SJF is equal to or less than the average wait time of any other batch scheduling order.}
 \end{samepage}
 
 
 \paragraph{Fairer Varients of SJF} Motivation: disallow job starvation.
 \begin{itemize}
-    \item \textbf{Shortest-Job Backfilled First (SJBF):} Exactly like EASY in terms of servicing the head of the wait queue in FCFS order (and not allowing anyone to delay it), but the \textit{backfilling} traversal is done in SJF order, i.e. the next job to be backfilled is the one with the shortest estimated runtime.
+  \item \textbf{Shortest-Job Backfilled First (SJBF):} Exactly like EASY in terms of servicing the head of the wait queue in FCFS order (and not allowing anyone to delay it), but the \textit{backfilling} traversal is done in SJF order, i.e. the next job to be backfilled is the one with the shortest estimated runtime.
 
-    \item \textbf{Largest eXpansion Factor (LXF):} LXF is similar to EASY, but instead of ordering the wait queue in FCFS, it orders jobs based on their current slowdown \red{(greater slowdown = higher priority)}.
+  \item \textbf{Largest eXpansion Factor (LXF):} LXF is similar to EASY, but instead of ordering the wait queue in FCFS, it orders jobs based on their current slowdown \red{(greater slowdown = higher priority)}.
 
-          \indent On every job arrival or termination, the expansion factors are recalculated and the wait queue is resorted, so that the job with the largest expansion factor is always at the head of the queue. Both the head of the queue and the backfilled jobs are serviced in LXF order.
+        \indent On every job arrival or termination, the expansion factors are recalculated and the wait queue is resorted, so that the job with the largest expansion factor is always at the head of the queue. Both the head of the queue and the backfilled jobs are serviced in LXF order.
 \end{itemize}
 
 
@@ -674,29 +687,29 @@ Why do we need preemption? Preemption is necessary for \textbf{responsiveness} a
 
 \paragraph{Performance Metrics for Preemptive Schedulers} we use the following:
 \begin{itemize}
-    \item \textbf{Average Wait Time:} As before, the wait time of a job is the interval between the time the job \textbf{is submitted} to the time the job \textbf{starts to run}. \textit{Note} that the wait time \red{does not include} the preemption wait times (i.e. the time the job is waiting for its turn to run again after being preempted).
+  \item \textbf{Average Wait Time:} As before, the wait time of a job is the interval between the time the job \textbf{is submitted} to the time the job \textbf{starts to run}. \textit{Note} that the wait time \red{does not include} the preemption wait times (i.e. the time the job is waiting for its turn to run again after being preempted).
 
-    \item \textbf{Response Time (=Turnaround Time):} Like before, the response time is the time from process submission to process completion. \textit{Note} that with preemption we get:
-          \begin{equation*}
-              \text{responseTime} \geq \text{waitTime} + \text{runtime}
-          \end{equation*}
-          due to the preemption wait times and \textbf{Context Switches} cost.
+  \item \textbf{Response Time (=Turnaround Time):} Like before, the response time is the time from process submission to process completion. \textit{Note} that with preemption we get:
+        \begin{equation*}
+          \text{responseTime} \geq \text{waitTime} + \text{runtime}
+        \end{equation*}
+        due to the preemption wait times and \textbf{Context Switches} cost.
 
-    \item \textbf{Overhead:} How long a context switch takes, and how often context switches happen. (Should be minimized)
+  \item \textbf{Overhead:} How long a context switch takes, and how often context switches happen. (Should be minimized)
 
-    \item \textbf{Utilization \& Throughput:} Same as before, but we may want to account for context switch overhead.
+  \item \textbf{Utilization \& Throughput:} Same as before, but we may want to account for context switch overhead.
 
-    \item \textbf{Makespan Time:} The time it takes for the system to finish all jobs in the system.
+  \item \textbf{Makespan Time:} The time it takes for the system to finish all jobs in the system.
 
 \end{itemize}
 
 
 \paragraph{Round Robin (RR) Scheduling} \textit{Processes are arranged in a cyclic read-queue}. The algorithm works in the following steps:
 \begin{enumerate}
-    \item  The head process runs until its quantum is exhausted.
-    \item The head process is then preempted (suspended) and moved to the tail of the queue.
-    \item The scheduler resumes the next process in the circular list.
-    \item When we've cycled through all processes in the run-list (and we reach the head process again), we say that the current \textbf{"epoch"} is over, and the next epoch begins.
+  \item  The head process runs until its quantum is exhausted.
+  \item The head process is then preempted (suspended) and moved to the tail of the queue.
+  \item The scheduler resumes the next process in the circular list.
+  \item When we've cycled through all processes in the run-list (and we reach the head process again), we say that the current \textbf{"epoch"} is over, and the next epoch begins.
 \end{enumerate}
 \textbf{Note:} RR Requires a timer interrupt; Typically it's a periodic interrupt (fires every few milliseconds) and upon receiving the interrupt, the OS checks if its time to preempt.
 \textbf{Note 2:} For \ul{small enough} quantum, it's like everyone of the N processes advances in \(1/N\) of the speed of the core \gray{called sometimes virtual time}.
@@ -704,11 +717,11 @@ With \ul{huge} quantum \gray{infinity}, RR becomes FCFS.
 
 \paragraph{Gang Scheduling} Think of it as RR for \textit{parallel} systems. It works as follows:
 \begin{itemize}
-    \item Time is divided to slots (seconds or minutes).
-    \item Every job has a \textbf{"native"} time slot.
-    \item Algorithm attempts to fill holes in time slots by assigning to them jobs from other native slots (called \textbf{"alternative"} slots).
-    \item Algorithm attempts to minimize slot number using \textbf{slot unification} when possible.
-    \item Rarely used in practice, if lots of memory is swapped out upon context switch, context switch overhead is too high.
+  \item Time is divided to slots (seconds or minutes).
+  \item Every job has a \textbf{"native"} time slot.
+  \item Algorithm attempts to fill holes in time slots by assigning to them jobs from other native slots (called \textbf{"alternative"} slots).
+  \item Algorithm attempts to minimize slot number using \textbf{slot unification} when possible.
+  \item Rarely used in practice, if lots of memory is swapped out upon context switch, context switch overhead is too high.
 \end{itemize}
 Detailed explanation about alternative slots and slot unification:
 
@@ -717,28 +730,28 @@ Detailed explanation about alternative slots and slot unification:
 \paragraph{Slot Unification}This technique aims to minimize the total number of active time slots. If, after some jobs have completed, the remaining jobs in two different time slots can fit into a single slot without conflict, the scheduler can merge them. By unifying slots, the overall cycle time of the matrix is reduced, which can lead to shorter job turnaround times and improved system throughput.
 
 \begin{figure}[H]
-    \centering
-    \includegraphics[width=1\textwidth]{GangScheduling.png}
-    \caption{Gang Scheduling}
-    \label{fig:Gang_Scheduling}
+  \centering
+  \includegraphics[width=1\textwidth]{GangScheduling.png}
+  \caption{Gang Scheduling}
+  \label{fig:Gang_Scheduling}
 \end{figure}
 
 
 \begin{samepage}
-    \paragraph{Batching vs. Preemption} \textbf{Assume:} (1) A single core system (2) All jobs arrive together (3) Context switch price = 0. \textbf{Then:} There \ul{exists} a non-preemptive algorithm such that:
-    \begin{equation*}
-        \text{avgResponseTime}(\text{non-preemptive}) \leq \text{avgResponseTime}(\text{preemptive})
-    \end{equation*}
-    As a result, SJF is also optimal relative to preemptive scheduling (if our assumptions hold).
-    \begin{equation*}
-        \text{avgResponseTime}(\text{SJF}) \leq \text{avgResponseTime}(\text{batch or preemptive scheduler})
-    \end{equation*}
+  \paragraph{Batching vs. Preemption} \textbf{Assume:} (1) A single core system (2) All jobs arrive together (3) Context switch price = 0. \textbf{Then:} There \ul{exists} a non-preemptive algorithm such that:
+  \begin{equation*}
+    \text{avgResponseTime}(\text{non-preemptive}) \leq \text{avgResponseTime}(\text{preemptive})
+  \end{equation*}
+  As a result, SJF is also optimal relative to preemptive scheduling (if our assumptions hold).
+  \begin{equation*}
+    \text{avgResponseTime}(\text{SJF}) \leq \text{avgResponseTime}(\text{batch or preemptive scheduler})
+  \end{equation*}
 \end{samepage}
 
 
 \paragraph{Connection Between RR \& SJF} \textbf{Assume:} (1) A single core system (2) All jobs arrive together \gray{(and only use CPU, no I/O)} (3) Quantum is uniform + \red{no} context switch overhead. \textbf{Then:}
 \begin{equation*}
-    \text{avgResponse}(\text{RR}) \leq \text{avgResponse}(\text{SJF})
+  \text{avgResponse}(\text{RR}) \leq \text{avgResponse}(\text{SJF})
 \end{equation*}
 i.e. RR at best is as good as SJF, and at worst is \(2X\) slower.
 
@@ -748,14 +761,14 @@ i.e. RR at best is as good as SJF, and at worst is \(2X\) slower.
 
 \paragraph{Selfish RR} Selfish RR is a variant of RR where only "old enough" processes are running in the run-queue. i.e.
 \begin{itemize}
-    \item New processes wait in a FIFO queue, not yet scheduled.
-    \item Older processes scheduled using RR.
-    \item New processes are scheduled when either of the following happens:
-          \begin{enumerate}
-              \item The run-queue is empty (i.e. no ready-to-run "old" processes exist).
-              \item "Aging" is being applied to new processes \gray{(a per-process counter increases over time)}; When the counter passes a certain threshold, the "new" process becomes "old" and is transferred to the RR queue.
-          \end{enumerate}
-    \item \textbf{Fast Aging} = Algorithm resembles RR, \textbf{Slow Aging} = Algorithm resembles FCFS.
+  \item New processes wait in a FIFO queue, not yet scheduled.
+  \item Older processes scheduled using RR.
+  \item New processes are scheduled when either of the following happens:
+        \begin{enumerate}
+          \item The run-queue is empty (i.e. no ready-to-run "old" processes exist).
+          \item "Aging" is being applied to new processes \gray{(a per-process counter increases over time)}; When the counter passes a certain threshold, the "new" process becomes "old" and is transferred to the RR queue.
+        \end{enumerate}
+  \item \textbf{Fast Aging} = Algorithm resembles RR, \textbf{Slow Aging} = Algorithm resembles FCFS.
 \end{itemize}
 
 
@@ -768,8 +781,8 @@ As a result, I/O-bound processes (that seldom use the CPU) get higher priority t
 
 \paragraph{Multi-Level Priority Queue} A multi-level priority queue consists of several RR queues, each associated with a priority. processes migrate between the queues so they have a dynamic priority, "important" processes move up (e.g. I/O-bound) and "unimportant" processes move down (e.g. CPU-bound). Priority is greatly affected by the \textbf{negative feedback principle}, i.e. by CPU consumption:
 \begin{itemize}
-    \item I/O-bound \(\Longleftrightarrow\) move up
-    \item CPU-bound \(\Longleftrightarrow\) move down
+  \item I/O-bound \(\Longleftrightarrow\) move up
+  \item CPU-bound \(\Longleftrightarrow\) move down
 \end{itemize}
 Some schedulers allocate short quanta to higher priority queues, and some don't or even do the opposite.
 
@@ -780,16 +793,16 @@ All of the definitions below are relative only to the Linux \(\leq\) 2.4 schedul
 
 \paragraph{Standard POSIX Scheduling Policies} POSIX dictates that each task is associated with one of three scheduling policies:
 \begin{itemize}
-    \item \textbf{"Realtime"} Policies:
-          \begin{enumerate}
-              \item \code{SCHED\_RR} (round-robin)
-              \item \code{SCHED\_FIFO} (first-in, first-out)
-          \end{enumerate}
-    \item The default policy:
-          \begin{enumerate}
-              \setcounter{enumi}{2}
-              \item \code{SCHED\_OTHER} (the default time-sharing policy)
-          \end{enumerate}
+  \item \textbf{"Realtime"} Policies:
+        \begin{enumerate}
+          \item \code{SCHED\_RR} (round-robin)
+          \item \code{SCHED\_FIFO} (first-in, first-out)
+        \end{enumerate}
+  \item The default policy:
+        \begin{enumerate}
+          \setcounter{enumi}{2}
+          \item \code{SCHED\_OTHER} (the default time-sharing policy)
+        \end{enumerate}
 \end{itemize}
 POSIX defines the meaning of \code{SCHED\_OTHER} (aka \code{SCHED\_NORMAL} in Linux) is decided by the OS. Typically employs some multi-level priority queue with the negative feedback loop.
 
@@ -802,77 +815,77 @@ POSIX defines the meaning of \code{SCHED\_OTHER} (aka \code{SCHED\_NORMAL} in Li
 
 \subsection*{Definitions}
 \begin{itemize}
-    \item \textbf{Task's Priority:} Every task is associated with an integer, the higher the value the higher the priority to run. Every task has a \textit{static} priority and a \textit{dynamic} priority.
-    \item \textbf{Static Priority:} A fixed value that indirectly determines the maximal quantum for the task. Fixed unless the user invokes \code{nice()} or \code{sched\_setscheduler} syscalls.
-    \item \textbf{Dynamic Priority:} Is the both the \blue{remaining time} for the task and its \blue{current priority}. The dynamic priority decreases over time (while running), if it reaches zero the task is preempted until the next epoch. The dynamic priority is \textit{reset} to the static priority at the beginning of each epoch.
+  \item \textbf{Task's Priority:} Every task is associated with an integer, the higher the value the higher the priority to run. Every task has a \textit{static} priority and a \textit{dynamic} priority.
+  \item \textbf{Static Priority:} A fixed value that indirectly determines the maximal quantum for the task. Fixed unless the user invokes \code{nice()} or \code{sched\_setscheduler} syscalls.
+  \item \textbf{Dynamic Priority:} Is the both the \blue{remaining time} for the task and its \blue{current priority}. The dynamic priority decreases over time (while running), if it reaches zero the task is preempted until the next epoch. The dynamic priority is \textit{reset} to the static priority at the beginning of each epoch.
 
-    \item \textbf{HZ:} Linux gets a timer interrupt \textit{HZ} times per second, i.e. it gets a timer interrupt every \(\frac{1}{\textit{HZ}}\) seconds. The default value of \textit{HZ} is 100 for x86/Linux2.4.
+  \item \textbf{HZ:} Linux gets a timer interrupt \textit{HZ} times per second, i.e. it gets a timer interrupt every \(\frac{1}{\textit{HZ}}\) seconds. The default value of \textit{HZ} is 100 for x86/Linux2.4.
 
-    \item \textbf{Tick:} A tick can mean either of the following:
+  \item \textbf{Tick:} A tick can mean either of the following:
+        \begin{itemize}
+          \item The time that elapses between two consecutive timer interrupts, i.e. \(\frac{1}{\textit{HZ}}\) seconds.
+          \item The timer interrupt itself that fires every \(\frac{1}{\textit{HZ}}\) seconds.
+        \end{itemize}
+        Ticks are used to determine the scheduler timing resolution, the OS measures the passage of time in ticks. The units of the \textit{dynamic priority} are ticks.
+
+  \item \textbf{task\_struct:} Every task is represented by a \textit{task\_struct} object, which contains (among other things):
+        \begin{enumerate}
+          \item nice \gray{static priority}
+          \item counter \gray{dynamic priority}
+          \item processor \gray{the last CPU core the task ran on}
+          \item need\_resched \gray{boolean}
+          \item mm \gray{task's memory address space}
+        \end{enumerate}
+
+  \item \textbf{task's nice} There are two types of nice, user nice and kernel nice. The \textbf{kernel's nice} is the \textit{static priority} of the task, which is \blue{between 1...40} (higher is better) and the \blue{default is 20}. The \textbf{user's nice} is the parameter passed to the \code{nice()} syscall, which is \blue{between -20...19} (\red{lower} is better). Values below 0 require superuser privileges.
+        \begin{equation*}
+          \text{kernel\_nice} = 20 - \text{user\_nice}
+        \end{equation*}
+
+        \begin{samepage}
+          \item {\textbf{task's counter}} The \textit{dynamic priority} of the task. It is calculated as follows:
           \begin{itemize}
-              \item The time that elapses between two consecutive timer interrupts, i.e. \(\frac{1}{\textit{HZ}}\) seconds.
-              \item The timer interrupt itself that fires every \(\frac{1}{\textit{HZ}}\) seconds.
+            \item Upon task creation:
+                  \begin{equation*}
+                    \begin{aligned}
+                      \text{child.counter}  & = \text{parent.counter}/2; & \gray{\text{(round down)}} \\
+                      \text{parent.counter} & -= \text{child.counter};   & \gray{\text{(round up)}}
+                    \end{aligned}
+                  \end{equation*}
+            \item Upon a new epoch:
+                  \begin{equation*}
+                    \begin{aligned}
+                      \text{task.counter} & = \text{task.counter}/2 + \text{NICE\_TO\_TICKS}(\text{task.nice}) \\
+                                          & \gray{= \text{half of prev dynamic + convert\_to\_ticks(static)}}
+                    \end{aligned}
+                  \end{equation*}
+            \item When running: decrement each tick by 1 (task.counter--) until it reaches 0.
           \end{itemize}
-          Ticks are used to determine the scheduler timing resolution, the OS measures the passage of time in ticks. The units of the \textit{dynamic priority} are ticks.
+          The \textbf{NICE\_TO\_TICKS} function scales 20 (=DEF\_PRIORITY) to number of tick compromising \textbf{50+ ms}. By default, scales 20 to 5+ ticks:\\
+          \code{\#define NICE\_TO\_TICKS(kern\_nice) ((kern\_nice) / 4 + 1)}\\
+          So the quantum range is therefore: \gray{(recall that 1 tick = 10 ms)}
+          \begin{itemize}
+            \item (1/4 + 1=) 1 tick = 10 ms (min.)
+            \item (20/4 + 1=) 6 ticks = 60 ms (default)
+            \item (40/4 + 1=) 11 ticks = 110 ms (max.)
+          \end{itemize}
 
-    \item \textbf{task\_struct:} Every task is represented by a \textit{task\_struct} object, which contains (among other things):
-          \begin{enumerate}
-              \item nice \gray{static priority}
-              \item counter \gray{dynamic priority}
-              \item processor \gray{the last CPU core the task ran on}
-              \item need\_resched \gray{boolean}
-              \item mm \gray{task's memory address space}
-          \end{enumerate}
+        \end{samepage}
 
-    \item \textbf{task's nice} There are two types of nice, user nice and kernel nice. The \textbf{kernel's nice} is the \textit{static priority} of the task, which is \blue{between 1...40} (higher is better) and the \blue{default is 20}. The \textbf{user's nice} is the parameter passed to the \code{nice()} syscall, which is \blue{between -20...19} (\red{lower} is better). Values below 0 require superuser privileges.
-          \begin{equation*}
-              \text{kernel\_nice} = 20 - \text{user\_nice}
-          \end{equation*}
+  \item \textbf{task's processor} Logical ID of CPU core upon which task has executed most recently, if task is currently running, then this is the core it is running on.
 
-          \begin{samepage}
-              \item {\textbf{task's counter}} The \textit{dynamic priority} of the task. It is calculated as follows:
-              \begin{itemize}
-                  \item Upon task creation:
-                        \begin{equation*}
-                            \begin{aligned}
-                                \text{child.counter}  & = \text{parent.counter}/2; & \gray{\text{(round down)}} \\
-                                \text{parent.counter} & -= \text{child.counter};   & \gray{\text{(round up)}}
-                            \end{aligned}
-                        \end{equation*}
-                  \item Upon a new epoch:
-                        \begin{equation*}
-                            \begin{aligned}
-                                \text{task.counter} & = \text{task.counter}/2 + \text{NICE\_TO\_TICKS}(\text{task.nice}) \\
-                                                    & \gray{= \text{half of prev dynamic + convert\_to\_ticks(static)}}
-                            \end{aligned}
-                        \end{equation*}
-                  \item When running: decrement each tick by 1 (task.counter--) until it reaches 0.
-              \end{itemize}
-              The \textbf{NICE\_TO\_TICKS} function scales 20 (=DEF\_PRIORITY) to number of tick compromising \textbf{50+ ms}. By default, scales 20 to 5+ ticks:\\
-              \code{\#define NICE\_TO\_TICKS(kern\_nice) ((kern\_nice) / 4 + 1)}\\
-              So the quantum range is therefore: \gray{(recall that 1 tick = 10 ms)}
-              \begin{itemize}
-                  \item (1/4 + 1=) 1 tick = 10 ms (min.)
-                  \item (20/4 + 1=) 6 ticks = 60 ms (default)
-                  \item (40/4 + 1=) 11 ticks = 110 ms (max.)
-              \end{itemize}
+  \item \textbf{task's need\_resched} A boolean flag that is checked by kernel just before switching back to user-mode. If set, check if there's a "better" task than the one currently running, and if so, switch to it. Can be thought of as a per-core rather than per-task flag as it is checked only for the currently running task.
 
-          \end{samepage}
-
-    \item \textbf{task's processor} Logical ID of CPU core upon which task has executed most recently, if task is currently running, then this is the core it is running on.
-
-    \item \textbf{task's need\_resched} A boolean flag that is checked by kernel just before switching back to user-mode. If set, check if there's a "better" task than the one currently running, and if so, switch to it. Can be thought of as a per-core rather than per-task flag as it is checked only for the currently running task.
-
-    \item \textbf{task's mm} A pointer to the task's memory address space. \gray{(More details in the virtual memory lectures)}
+  \item \textbf{task's mm} A pointer to the task's memory address space. \gray{(More details in the virtual memory lectures)}
 \end{itemize}
 
 
 The scheduler is implemented in the \code{kernel/sched.c} file, and the task structure is defined in \code{include/linux/sched.h}. The scheduler is compromised of \textbf{4 main functions}:
 \begin{enumerate}
-    \item \code{goodness(task, cpu)} - Given a task and a CPU core, returns how "desirable" it is for that CPU. We compare tasks by this value to determine which task to run next.
-    \item \code{schedule()} - Actual implementation of the scheduler. Uses \code{goodness} to decide which task to run on a given core.
-    \item \code{\_\_wake\_up\_common(wait\_queue q)} - Wakes up task(s) when waited-for event has happened. e.g. completion of I/O operation, or a signal being sent to the task.
-    \item \code{reschedule\_idle(task t)} - Given a task, check whether it can be scheduled on some core. Preferably on an idle core, but if not then by preempting a less "desirable" task on a busy core. \blue{Note:} used by the \code{schedule()} \& \code{\_\_wake\_up\_common()} functions.
+  \item \code{goodness(task, cpu)} - Given a task and a CPU core, returns how "desirable" it is for that CPU. We compare tasks by this value to determine which task to run next.
+  \item \code{schedule()} - Actual implementation of the scheduler. Uses \code{goodness} to decide which task to run on a given core.
+  \item \code{\_\_wake\_up\_common(wait\_queue q)} - Wakes up task(s) when waited-for event has happened. e.g. completion of I/O operation, or a signal being sent to the task.
+  \item \code{reschedule\_idle(task t)} - Given a task, check whether it can be scheduled on some core. Preferably on an idle core, but if not then by preempting a less "desirable" task on a busy core. \blue{Note:} used by the \code{schedule()} \& \code{\_\_wake\_up\_common()} functions.
 \end{enumerate}
 
 \paragraph{Counter Convergence} \textbf{Claim:} The counter value of an I/O-bound task will quickly converge to \(2\alpha\) \gray{geometric series}.
@@ -882,7 +895,7 @@ The scheduler is implemented in the \code{kernel/sched.c} file, and the task str
 
 
 \newpage
-\Topic{Synchoronization}
+\Topic{Synchoronization (\& Deadlocks)}
 
 \paragraph{\red{Race Condition}} We say that the program suffers from a \textit{race condition} if the \textit{outcome is nondeterministic and depends on teh timing of uncontrollable, un-synchronized events}
 
@@ -903,7 +916,6 @@ To enforce ordering for memory consistency, explicit \textbf{memory fence} (memo
 \paragraph{Mutual Exclusion (mutex)} is a property of a critical section that ensures that only one thread can execute it at a time and never simultaneously. Thus a critical section is a \blue{"serilaization point"}.
 
 
-% // TODO: Write about deadlock and livelocks!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 \section*{Locks}
 
@@ -948,19 +960,19 @@ void release(struct spinlock *lock) {
 
 \paragraph{Other Atomic Operations} We know of \textbf{3} atomic operations that are used to implement spinlocks:
 \begin{enumerate}
-    \item \textbf{xchg(addr, newval)} - Atomically exchanges the value at \code{addr} with \code{newval} and returns the old value.
+  \item \textbf{xchg(addr, newval)} - Atomically exchanges the value at \code{addr} with \code{newval} and returns the old value.
 
-    \item \textbf{test\_and\_set(bool *b)} - Atomically sets \code{*b} to \textit{true} and returns the old value of \code{*b}.
+  \item \textbf{test\_and\_set(bool *b)} - Atomically sets \code{*b} to \textit{true} and returns the old value of \code{*b}.
 
-    \item \textbf{cas(int *p, int old\_val, int new\_val)} - (Compare-and-Swap) Atomically compares the value at \code{*p} with \code{old\_val}, and if they are equal, sets \code{*p} to \code{new\_val} and returns true. Otherwise, it returns false and does not change \code{*p}.
+  \item \textbf{cas(int *p, int old\_val, int new\_val)} - (Compare-and-Swap) Atomically compares the value at \code{*p} with \code{old\_val}, and if they are equal, sets \code{*p} to \code{new\_val} and returns true. Otherwise, it returns false and does not change \code{*p}.
 \end{enumerate}
 
 
 \paragraph{Spinning or Blocking} A lock can be implemented using either \textbf{spinning} or \textbf{blocking}:
 \begin{itemize}
-    \item \textbf{Spin (busy wait)} - The thread repeatedly checks if the lock is available, consuming CPU cycles while waiting. This is suitable for short critical sections where the wait time is expected to be very short. Note that the user \red{can not} block context switches.
+  \item \textbf{Spin (busy wait)} - The thread repeatedly checks if the lock is available, consuming CPU cycles while waiting. This is suitable for short critical sections where the wait time is expected to be very short. Note that the user \red{can not} block context switches.
 
-    \item \textbf{Block (go to wait/sleep)} - The thread goes to sleep and is woken up when the lock is available. This is suitable for longer critical sections where the wait time can be significant.
+  \item \textbf{Block (go to wait/sleep)} - The thread goes to sleep and is woken up when the lock is available. This is suitable for longer critical sections where the wait time can be significant.
 \end{itemize}
 Rule of thumb: If the critical section is shorter than the time a context switch takes, then use spinning, otherwise use blocking.\\
 Unlike spinning which can be done by the user, going to sleeping is done by a request to the OS (since it involves changing process states).
@@ -973,20 +985,20 @@ Unlike spinning which can be done by the user, going to sleeping is done by a re
 
 The fields of the semaphore are as follows:
 \begin{itemize}
-    \item Value (integer) \gray{(the counter)}:\par
-          If value is Non-negative, it indicates the number of available resources. If value is negative, it indicates the number of tasks waiting for the resource.
+  \item Value (integer) \gray{(the counter)}:\par
+        If value is Non-negative, it indicates the number of available resources. If value is negative, it indicates the number of tasks waiting for the resource.
 
-    \item A queue of waiting task: \par
-          Every task that is waiting for the resource to become available is stored in this queue. When the value is negative, \(|\text{value}| = \text{queue.lenght}|\)/
+  \item A queue of waiting task: \par
+        Every task that is waiting for the resource to become available is stored in this queue. When the value is negative, \(|\text{value}| = \text{queue.lenght}|\)/
 
 \end{itemize}
 
 
 The functions used to manipulate the semaphore are:
 \begin{itemize}
-    \item \code{wait(sem)}: Decrements the value of the semaphore. If the value \gray{after decrementing} is negative, the task goes to sleep and is added to the queue of waiting tasks. Otherwise, it continues execution.
+  \item \code{wait(sem)}: Decrements the value of the semaphore. If the value \gray{after decrementing} is negative, the task goes to sleep and is added to the queue of waiting tasks. Otherwise, it continues execution.
 
-    \item \code{signal(sem)}: Increments the value of the semaphore. If the value was negative before incrementing, it wakes up one task from the queue of waiting tasks.
+  \item \code{signal(sem)}: Increments the value of the semaphore. If the value was negative before incrementing, it wakes up one task from the queue of waiting tasks.
 \end{itemize}
 
 \paragraph{Semaphore Implementation} The semaphore is implemented in the kernel and \red{not} part of the course material. However, the following is a demonstration of the problem known as \red{\textbf{lost wakeups}}.
@@ -1022,42 +1034,42 @@ The problem with the above implementation is that we release the the lock before
 
 
 \begin{samepage}
-    \begin{center}
-        \textbf{Spinlock vs. Semaphore}
-        \rowcolors{2}{gray!15}{white}
-        \begin{tabular}{|>{\raggedright\arraybackslash}p{3cm}|
-            >{\raggedright\arraybackslash}p{4cm}|
-            >{\raggedright\arraybackslash}p{6cm}|}
-            \hline
-            \rowcolor{blue!30}
-                                 & \textbf{spinlock}                                               & \textbf{semaphore}                                                                                                                 \\
-            \hline
-            wait by              & spinning                                                        & sleeping                                                                                                                           \\
-            granularity          & fine                                                            & coarse: might wait for a long time                                                                                                 \\
-            complexity           & lower                                                           & greater: typically uses lock                                                                                                       \\
-            expressiveness       & lower                                                           & greater: equivalent to lock if maximal value=1 (called ``binary semaphore''); otherwise, counting how many resources are available \\
-            interface ordering   & strict: must acquire before release, must release after acquire & relaxed: may signal(s) without wait(s), may wait(s) without signal(s)                                                              \\
-            interface dependence & strict: release only invoked by locker                          & relaxed: signal may be invoked by threads that didn't previously wait and vice versa                                               \\
-            \hline
-        \end{tabular}
-    \end{center}
+  \begin{center}
+    \textbf{Spinlock vs. Semaphore}
+    \rowcolors{2}{gray!15}{white}
+    \begin{tabular}{|>{\raggedright\arraybackslash}p{3cm}|
+      >{\raggedright\arraybackslash}p{4cm}|
+      >{\raggedright\arraybackslash}p{6cm}|}
+      \hline
+      \rowcolor{blue!30}
+                           & \textbf{spinlock}                                               & \textbf{semaphore}                                                                                                                 \\
+      \hline
+      wait by              & spinning                                                        & sleeping                                                                                                                           \\
+      granularity          & fine                                                            & coarse: might wait for a long time                                                                                                 \\
+      complexity           & lower                                                           & greater: typically uses lock                                                                                                       \\
+      expressiveness       & lower                                                           & greater: equivalent to lock if maximal value=1 (called ``binary semaphore''); otherwise, counting how many resources are available \\
+      interface ordering   & strict: must acquire before release, must release after acquire & relaxed: may signal(s) without wait(s), may wait(s) without signal(s)                                                              \\
+      interface dependence & strict: release only invoked by locker                          & relaxed: signal may be invoked by threads that didn't previously wait and vice versa                                               \\
+      \hline
+    \end{tabular}
+  \end{center}
 \end{samepage}
 
 
 \paragraph{Amdahl's Law} Amdahl's Law is a formula that gives the maximum improvement to an overall system when only part of the system is improved.\par
 So what is the maximal expected speed when parallelizing?
 \begin{itemize}
-    \item Let \(n\) be the number of threads.
-    \item Let \(s\) be the fraction of the program that is strictly serial \((0\leq s \leq 1)\).
-    \item Let \(T_n\) be the time it takes to run the algorithm with n threads.
-    \item Then, optimally:
-          \begin{equation*}
-              T_n = T_1 \times \left( s + \frac{1-s}{n} \right) \geq T_1 \times sem
-          \end{equation*}
-    \item The speedup is defined as:
-          \begin{equation*}
-              speedup = \frac{T_1}{T_n} = \frac{1}{s + \frac{1-s}{n}} \leq \frac{1}{s}
-          \end{equation*}
+  \item Let \(n\) be the number of threads.
+  \item Let \(s\) be the fraction of the program that is strictly serial \((0\leq s \leq 1)\).
+  \item Let \(T_n\) be the time it takes to run the algorithm with n threads.
+  \item Then, optimally:
+        \begin{equation*}
+          T_n = T_1 \times \left( s + \frac{1-s}{n} \right) \geq T_1 \times sem
+        \end{equation*}
+  \item The speedup is defined as:
+        \begin{equation*}
+          speedup = \frac{T_1}{T_n} = \frac{1}{s + \frac{1-s}{n}} \leq \frac{1}{s}
+        \end{equation*}
 \end{itemize}
 
 
@@ -1066,11 +1078,11 @@ So what is the maximal expected speed when parallelizing?
 
 \paragraph{Progress} At any given time, at least one thread is able to do the critical section, i.e. No "deadlock" or "livelock" occur.
 \begin{itemize}
-    \item \textbf{Deadlock} - A situation in which two or more competing actions are each waiting for the other to finish, and thus no one ever finishes. e.g. two threads waiting for each other to release a lock.
+  \item \textbf{Deadlock} - A situation in which two or more competing actions are each waiting for the other to finish, and thus no one ever finishes. e.g. two threads waiting for each other to release a lock.
 
-    \item \textbf{Livelock} - A situation in which two or more competing actions are each trying to finish, but they keep interfering with each other, and thus no one ever finishes. e.g. two threads trying to acquire a lock, but they keep releasing it and trying again.
+  \item \textbf{Livelock} - A situation in which two or more competing actions are each trying to finish, but they keep interfering with each other, and thus no one ever finishes. e.g. two threads trying to acquire a lock, but they keep releasing it and trying again.
 
-    \item \textbf{Starvation} - A situation in which a thread is unable to finish its critical section because it is always preempted by other threads. e.g. a low-priority thread that is never scheduled because high-priority threads keep running.
+  \item \textbf{Starvation} - A situation in which a thread is unable to finish its critical section because it is always preempted by other threads. e.g. a low-priority thread that is never scheduled because high-priority threads keep running.
 \end{itemize}
 
 
@@ -1084,60 +1096,60 @@ Therefore, \textbf{Locks} are a synchronization construct that reflect a single 
 
 \paragraph{Resource Allocation Graph} When considering resource management, it is convenient to represent the system state with a directed graph. We can represent the system in one of two ways:
 \begin{itemize}
-    \item \textbf{Multi-Resource Allocation Graph:} A directed graph where: (1) "round" nodes are processes (2) "square" nodes are resources with the dots in them representing the number of instances (3) edges from process to resource represent request (4) edges from resource to process represent allocation.
+  \item \textbf{Multi-Resource Allocation Graph:} A directed graph where: (1) "round" nodes are processes (2) "square" nodes are resources with the dots in them representing the number of instances (3) edges from process to resource represent request (4) edges from resource to process represent allocation.
 
-    \item \textbf{Single Instance Resources (Simplified):} We can simplify the system with a directed graph where: (1) nodes are processes (2) edges mark dependencies between processes, i.e. an edge from process A to process B means that A is waiting for a resource held by B.
+  \item \textbf{Single Instance Resources (Simplified):} We can simplify the system with a directed graph where: (1) nodes are processes (2) edges mark dependencies between processes, i.e. an edge from process A to process B means that A is waiting for a resource held by B.
 
 \end{itemize}
 
 \begin{figure}[H]
-    \centering
-    \includegraphics[width=0.6\textwidth]{ResourceGraph.png}
-    \caption{Resource Allocation Graph}
-    \label{fig:Resource_Allocation_Graph}
+  \centering
+  \includegraphics[width=0.6\textwidth]{ResourceGraph.png}
+  \caption{Resource Allocation Graph}
+  \label{fig:Resource_Allocation_Graph}
 \end{figure}
 
 
 \paragraph{Necessary Conditions for Deadlocks} \red{All} of the following \red{must hold} for a deadlock to occur:
 \begin{enumerate}
-    \item \textbf{Mutual Exclusion:} \par
-          At least one resource must be held in a non-shareable mode, i.e. only one process at a time can use the resource. \gray{if every resource is shareable or used by a single process, then no deadlock can occur.}
+  \item \textbf{Mutual Exclusion:} \par
+        At least one resource must be held in a non-shareable mode, i.e. only one process at a time can use the resource. \gray{if every resource is shareable or used by a single process, then no deadlock can occur.}
 
-    \item \textbf{Hold \& Wait:} \par
-          Processes holding resources are allowed to request additional resources without releasing the resources they already hold. \gray{If processes must release all resources before requesting new ones or atommically request all resources, then no deadlock can occur.}
+  \item \textbf{Hold \& Wait:} \par
+        Processes holding resources are allowed to request additional resources without releasing the resources they already hold. \gray{If processes must release all resources before requesting new ones or atommically request all resources, then no deadlock can occur.}
 
-    \item \textbf{Circular Wait:} \par
-          There must be a circular chain of two or more processes, each waiting for a resource held by the next process in the chain. i.e. \(P(i)\) wait for resource held by \(P((i+1)\%n)\). \gray{Otherwise there exists at least one process that doesn't need to wait}
+  \item \textbf{Circular Wait:} \par
+        There must be a circular chain of two or more processes, each waiting for a resource held by the next process in the chain. i.e. \(P(i)\) wait for resource held by \(P((i+1)\%n)\). \gray{Otherwise there exists at least one process that doesn't need to wait}
 
-    \item \textbf{No Resource Preemption:} \par
-          Resources cannot be forcibly taken from a process holding them, they must be voluntarily released. \gray{If resources held can be released after some period of time, then no deadlock can occur.}
+  \item \textbf{No Resource Preemption:} \par
+        Resources cannot be forcibly taken from a process holding them, they must be voluntarily released. \gray{If resources held can be released after some period of time, then no deadlock can occur.}
 \end{enumerate}
 
 
 \paragraph{Dealing with Deadlocks} There are \textbf{3} main strategies to deal with deadlocks:
 \begin{itemize}
-    \item \textbf{Deadlock Prevention:} Violate one of the 4 conditions necessary for deadlock to occur.
+  \item \textbf{Deadlock Prevention:} Violate one of the 4 conditions necessary for deadlock to occur.
 
-    \item \textbf{Deadlock Detection \& Recovery:} Allow the system to enter deadlock state, but put in place mechanisms that can detect, and then recover from this situation. Typically refers to killing one or more processes in the deadlock state, using the algorithmic resource-graph problem.
+  \item \textbf{Deadlock Detection \& Recovery:} Allow the system to enter deadlock state, but put in place mechanisms that can detect, and then recover from this situation. Typically refers to killing one or more processes in the deadlock state, using the algorithmic resource-graph problem.
 
-    \item \textbf{Deadlock Avoidance:} Use a resource allocation graph to detect potential deadlocks and avoid them by not allocating resources that would lead to a deadlock. (e.g. Banker's Algorithm). Requires full knowledge of the system's resource requirements and current allocation.
+  \item \textbf{Deadlock Avoidance:} Use a resource allocation graph to detect potential deadlocks and avoid them by not allocating resources that would lead to a deadlock. (e.g. Banker's Algorithm). Requires full knowledge of the system's resource requirements and current allocation.
 \end{itemize}
 
 \paragraph{Deadlock Prevention} There are 4 conditions for deadlock to occur, and we can prevent deadlocks by violating one of them:
 \begin{enumerate}
-    \item \textbf{No Mutual Exclusion:} \par
-          Making all resources sharable, by implementing some data structure using only hardware-supported atomic operations. These algorithms are called "lock free".
+  \item \textbf{No Mutual Exclusion:} \par
+        Making all resources sharable, by implementing some data structure using only hardware-supported atomic operations. These algorithms are called "lock free".
 
-    \item \textbf{No Hold \& Wait:} \par
-          Each process must request all resources it needs at once, or release all resources before requesting new ones. The system either grants all resources or none and block the process.
-          \textbf{Con:} Processes will hold on to their resources for more time than they actually need them, which limits concurrency and hence limits performance.
+  \item \textbf{No Hold \& Wait:} \par
+        Each process must request all resources it needs at once, or release all resources before requesting new ones. The system either grants all resources or none and block the process.
+        \textbf{Con:} Processes will hold on to their resources for more time than they actually need them, which limits concurrency and hence limits performance.
 
-    \item \textbf{No Circular Wait:} \gray{the most usable flexible method} \par
-          Impose a strict ordering on resources, i.e. number all resources in one sequence. Processes can only request resources in increasing order, a process that wants to acquire a resource that has a lower order must first release all resources it holds that have a higher order.
+  \item \textbf{No Circular Wait:} \gray{the most usable flexible method} \par
+        Impose a strict ordering on resources, i.e. number all resources in one sequence. Processes can only request resources in increasing order, a process that wants to acquire a resource that has a lower order must first release all resources it holds that have a higher order.
 
-    \item \textbf{No "No Resource Preemption":} \par
-          When needed, choose a victim process and release its resources, allowing other processes to continue. \par
-          \gray{e.g. if there isn't enough memory, we can backup the victim's state to disk and release all its memory, or just kill the process.}
+  \item \textbf{No "No Resource Preemption":} \par
+        When needed, choose a victim process and release its resources, allowing other processes to continue. \par
+        \gray{e.g. if there isn't enough memory, we can backup the victim's state to disk and release all its memory, or just kill the process.}
 
 \end{enumerate}
 
@@ -1149,21 +1161,21 @@ In literature, Detection and Recovery refer to the algorithmic problem of findin
 
 \paragraph{Deadlock Avoidance} The system can avoid deadlocks by not allocating resources that would lead to a deadlock. This is achieved by the \textbf{Banker's Algorithm}, which is a resource allocation and deadlock avoidance algorithm that tests for safety before allocating resources. The algorithm maintains a \textit{safe state} and only allocates resources if it can guarantee that the system will remain in a safe state after the allocation. The algorithm requires knowledge of the maximum resource requirements of each process and the current allocation of resources.
 
-\textbf{Safe State:} A system state where we are sure that all processes can be executed \textbf{in some order}, one after the other, such that each one will obtain all the resources it needs to finish. We assume once a process recives all the resources it needs, it will finish and release all its resources. \par
+\textbf{Safe State:} A system state where we are sure that all processes can be executed \textbf{in some order}, one after the other, such that each one will obtain all the resources it needs to finish. We assume once a process receives all the resources it needs, it will finish and release all its resources. \par
 
 \paragraph{Rules of the Banker's Algorithm} The Banker's Algorithm works as follows:
 \begin{itemize}
-    \item There are \(n\) processes and \(k\) resource types \gray{(each resource can have multiple instances)}.
-    \item Upon initilizaion, each process \(p\) \blue{declares the maximal} number of resource-instances it will need for each type, \blue{\(\max[p]\)}.
-    \item While running, OS mainains how many resources are \blue{currently allocated} to each process, \blue{\(cur[p]\)}.
-    \item And how many resource instances are \blue{currently available (free)}, \blue{\(avail\)}.
-    \item Upon a request for resources by a process \(p\), \blue{\(R\)}, the OS allocates iff the system will stay in a safe-state after the allocation. If not, the process is blocked until the resources are available.
+  \item There are \(n\) processes and \(k\) resource types \gray{(each resource can have multiple instances)}.
+  \item Upon initialization, each process \(p\) \blue{declares the maximal} number of resource-instances it will need for each type, \blue{\(\max[p]\)}.
+  \item While running, OS maintains how many resources are \blue{currently allocated} to each process, \blue{\(cur[p]\)}.
+  \item And how many resource instances are \blue{currently available (free)}, \blue{\(avail\)}.
+  \item Upon a request for resources by a process \(p\), \blue{\(R\)}, the OS allocates iff the system will stay in a safe-state after the allocation. If not, the process is blocked until the resources are available.
 \end{itemize}
 
-\textbf{Note:} The Banker's Algorithm is \blue{conservative}, i.e. it will not allocate resources even if there is possibiliy to allocate them without deadlocking the system. The OS doesn't take chances! With \blue{Time Complexity \(O(n^2)\)}.
+\textbf{Note:} The Banker's Algorithm is \blue{conservative}, i.e. it will not allocate resources even if there is possibility to allocate them without deadlocking the system. The OS doesn't take chances! With \blue{Time Complexity \(O(n^2)\)}.
 
 \begin{lstlisting}[language=C, caption={Banker's Algorithm}, label={lst:bankers_algorithm}]
-// *Asume* that request R was granted to process q
+// *Assume* that request R was granted to process q
 cur[q] += R;                            // vector addition
 avail -= R; 
 // Check if the system is in a safe state (i.e. all processes can finish in some order)
@@ -1194,43 +1206,229 @@ return SUCCESS
 \newpage
 \Topic{Networking}
 
+\paragraph{Protocol} A protocol is a set of rules defining the \textit{format \& order} of messages sent \& received, and what actions are taken upon message transmission or receipt.
+
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.8\textwidth]{NetworkLayers.png}
+  \caption{Network Layers Overview}
+  \label{fig:networking_overview}
+\end{figure}
+
+In a nutshell, networks can be divided into 5 layers as follows:
+\begin{itemize}
+  \item \textbf{Application Layer - L5:} The top layer, where applications communicate with each other. Examples include HTTP, FTP, SMTP, etc.
+  \item \textbf{Transport Layer - L4:} Responsible for end-to-end communication between applications. It provides reliable or unreliable delivery of data. Examples include TCP (reliable) and UDP (unreliable).
+  \item \textbf{Network Layer - L3:} Responsible for routing data between devices on different networks. It provides logical addressing and routing. Examples include IP (Internet Protocol).
+  \item \textbf{Data Link Layer - L2:} Responsible for node-to-node communication within the same network. It provides physical addressing and error detection. Examples include Ethernet, Wi-Fi, etc.
+  \item \textbf{Physical Layer - L1:} The lowest layer, responsible for the physical transmission of data over a medium. It includes the hardware components such as cables, switches, and network interface cards (NICs).
+\end{itemize}
+
+
+\noindent\rule{\linewidth}{0.5pt}
+
+\section*{Application Layer (L5)}
+
+The Application Layer is the topmost layer in the network architecture. It provides network services directly to the user's applications. This layer is responsible for facilitating communication between software applications and lower layers of the network stack.
+
+The Application Layer interacts with the Transport Layer (L4) to establish connections and manage data flow between applications on different devices. One can easily invent a new protocol as needed.
+
+There are \textbf{Standard} protocols (determined by multiple organizations): HTTP, HTTPS, NFS, SSH, Bitcoin...
+And \textbf{Proprietary} protocols (determined by a single organization): Microsoft Exchange, Skype, Zoom, Whatsapp...
+
+\paragraph{Problems In Networking - } There are 2 main problems to consider when discussing networks:
+\begin{itemize}
+  \item \textbf{Lossiness:} Networks are inherently lossy, meaning that data sent won't always arrive at the destination. This can be due to various reasons such as hardware failures... But more commonly, it is due to running out of \textit{memory buffer space} in network elements.
+  \item \textbf{Reordering:} Networks may mess up the order of the messages sent.
+\end{itemize}
 
 
 
 
 
+\noindent\rule{\linewidth}{0.5pt}
+
+
+\section*{Transport Layer (L4)}
+
+Protocols in Layer 4 provide host-to-host communication services \textit{for processes}, they are implemented (typically) by the OS. Two most common protocols are: \textbf{TCP} (Transmission Control Protocol) and \textbf{UDP} (User Datagram Protocol).
+
+\paragraph{TCP} "The protocol that cares", i.e. it cares about data loss \& reordering. It ensures that data is delivered reliably and in the correct order. Provides \textbf{stream} of bytes between two processes. Said to be \textbf{connection-oriented} because it establishes a connection before transmitting data. Simplified view of TCP:
+\begin{itemize}
+  \item \textbf{Sender}
+        \begin{enumerate}
+          \item Establish a connection with the receiver by performing a \textit{3-way handshake}.
+          \item Split bytes into contiguous chunks called \textit{segments}.
+          \item Assign a sequence number to each segment, and keep them around until they are acknowledged by the receiver.
+          \item Resend segments that are not acknowledged for some time, or receiver says they are missing.
+          \item Slow down the sending rate if segments sent are not reaching the receiver.
+          \item Implement \textbf{Congestion Control} = changing the rate in response to drops.
+        \end{enumerate}
+  \item \textbf{Receiver}
+        \begin{enumerate}
+          \item Send ack messages (acknowledgments) upon receiving chunks.
+          \item Ask sender to resend chunks that appear to be missing for some time.
+          \item "Advertise" free buffer space to the sender, so it knows how much data it can send without overflowing the receiver's buffer.
+          \item Implement \textbf{Flow Control} (advertising) = Receiver controls sender transmission rate, thereby preventing its own buffer overflow.
+          \item Deliver the bytes in-order to receiving user-level app.
+        \end{enumerate}
+\end{itemize}
+
+\paragraph{UDP} "The protocol that doesn't care", i.e. it \red{does not} guarantee reliable delivery nor in-order delivery of data. Provides \textbf{datagrams} (as opposed to a stream) of bytes between two processes. Chunks might get lost or be delivered out of order, \red{but} per-chunk bytes integrity is supported. Said to be \textbf{connectionless} because it does not establish a connection before transmitting data. Compared to TCP, UDP is simpler and has less overhead, lower latency, and no congestion control.
+
+\paragraph{Sockets} Apps communicate with the Transport Layer through \textbf{socket file descriptors}, created via the \code{socket()} system call, instead of \code{open()}. A \textbf{\code{sockfd}} constitutes a communication endpoint.
+
+Note: It is recommended to understand what IPs are before continuing this section (\gray{read next section - IP})
+
+\paragraph{Ports} Ports exist on the same host, and there can be a multiple of them. Each communicating process utilizes \code{sockfd}s to identify its own communication channel, each with its own associated \textbf{port}. As IPs are not sufficient, we use a unique port for each socket, which is an \blue{unsigned 16-bit integer} that identifies it on the host. Each chunk transmitted is associated with IP-address + port.
+
+
+Ports can either be \textbf{Ephemeral} (temporary, dynamically assigned by the kernel), or \textbf{Well-Known} (static, determined by standards/known values). \red{Ports \(\leq\) 1023} are reserved for well-known protocols, such as HTTP (80), HTTPS (443), etc.
+
+Each socket is identified by a \textbf{5-tuple} consisting of: \\
+1. Source IP address \\
+2. Source port number \\
+3. Destination IP address \\
+4. Destination port number \\
+5. Transport protocol (e.g. TCP, UDP)
+
+
+\subsection*{Client-Server Model (TCP)}
+In the client-server model, a server listens for incoming connections from clients, and clients initiate connections to the server. The \textbf{server} \blue{passively} waits for client requests and then reacts, "request-response" paradigm. The server has a well-known domain name (and/or IP address) \& port. The \textbf{client} asynchronously/intermittently connects to the server, sends requests, and waits for responses. The client may have dynamic IP, and may use ephemeral port.
+
+Sockets are initialized using values from \code{addrinfo} structure, which contains the following info: (1) Protocol family (e.g. IPv4, IPv6), (2) Protocol type (TCP), (3) Socket type (stream), (4) server/client.
+
+
+% --- Table code begins ---
+\begin{samepage}
+  \begin{center}
+    \textbf{Creating and Using TCP Sockets}
+    \rowcolors{2}{gray!15}{white}
+    \begin{tabular}{|>{\raggedright\arraybackslash\ttfamily}p{4cm}|
+                     >{\centering\arraybackslash}p{5.5cm}|
+                     >{\raggedright\arraybackslash\ttfamily}p{4cm}|}
+      \hline
+      \rowcolor{blue!50}
+      \textcolor{white}{\textbf{server}} &
+      \textcolor{white}{\textbf{message}} &
+      \textcolor{white}{\textbf{client}} \\
+      \hline
+      srvfd = socket(...) & & sockfd = socket(...) \\
+      
+      bind( srvfd , port ) & & \\
+      
+      listen( srvfd ) & & \\
+      
+      \normalfont\textit{loop:} & & \\
+      
+      clifd = accept( srvfd ) &
+      \red{$\xleftarrow{\text{\textcolor{black}{request service (transport)}}}$ } &
+      connect( sockfd , host+port ) \\
+      
+      read(clifd ) &
+      \red{$\xleftarrow{\text{\textcolor{black}{request (application)}}}$ } &
+      write( sockfd ) \\
+      
+      write( clifd ) &
+      \red{$\xrightarrow{\text{\textcolor{black}{response (application)}}}$ } &
+      read( sockfd ) \\
+      \hline
+    \end{tabular}
+  \end{center}
+\end{samepage}
+% --- Table code ends ---
+
+
+\noindent\rule{\linewidth}{0.5pt}
+
+
+
+\section*{Network Layer (L3) - IP}
+
+The Network Layer is responsible for routing data between devices on different networks. It provides logical addressing and routing. The most common protocol in this layer is the Internet Protocol (IP).
+
+\paragraph{Domain \& Host Names} Computers are associated with hierarchical human-readable "domain" names, sometimes referred to as host names, e.g. \textit{www.google.com}. Each domain names can be backed by one or more host machines, but we will use the term host name assuming it corresponds to a single host machine.
+
+
+\paragraph{IP Address} Domain names are only for humans to read, but computers need to know the \textbf{IP address} of the host they want to communicate with. An IP address is a unique identifier assigned to each device connected to a network. Each host is mapped to a 32-bit IP address obtained via a domain name resolution protocol called \textbf{DNS} (Domain Name System). \gray{"IP" for us stands for IPv4 (Internet Protocol version 4), but there is also IPv6 which is a 128-bit address space which we will ignore.}
+
+Each IP address corresponds to a single host, unlike domain names. Domain names can point to multiple IP addresses (e.g. load balancing), while each IP address is unique to a specific host. The opposite is also not true, i.e. one host can have multiple IP addresses. For simplicity we will assume there's a 1-to-1 host-to-IP mapping.
+
+Note: IP is used to identify host machines, while TCP/UDP are used to identify individual communication channels of processes on the host.
+
+
+
+% --- Start of the example ---
+\vspace{0.5em} % Adds a little vertical space before the table
+\begin{center}
+  For example, the IP of \texttt{csa.cs.technion.ac.il} is
+  \begin{tabular}{ll}
+    \toprule
+    \textbf{Notation}      & \textbf{IP address}                                                              \\
+    \midrule
+    Decimal                & 2219057153 \textcolor{gray}{(not terribly convenient)}                           \\[1.5ex]
+    Binary (8x4 = 32 bits) &
+    $\overset{132}{\texttt{10000100}} \enspace | \enspace
+      \overset{68}{\texttt{01000100}} \enspace | \enspace
+      \overset{32}{\texttt{00100000}} \enspace | \enspace
+    \overset{1}{\texttt{00000001}}$                                                                           \\[1.5ex]
+    Dot-decimal            & \textcolor{blue!80!black}{132.68.32.1} \textcolor{gray}{(a bit more convenient)} \\
+    \bottomrule
+  \end{tabular}
+\end{center}
+% --- End of the LaTeX code for the table ---
+
+
+
+\noindent\rule{\linewidth}{0.5pt}
+
+
+\section*{Physical-Layer (L1) \& Link Layer (L2)}
+
+\paragraph{LAN (Local Area Network)} A LAN is a network that connects devices within a limited geographical area, such as a home, office, or campus. It typically uses Ethernet or Wi-Fi technologies to connect devices. Each LAN device is equipped with \textbf{Network Interface Card (NIC)}, which is a hardware component that allows the device to connect to the network. 
+
+We will focus on Ethernet, which is the most common LAN technology. 
+
+\paragraph{Ethernet} Ethernet is a protocol that combines hardware, firmware, and software (OS). Ethernet is both a link-layer protocol (L2) as it allows nodes to communicate within the LAN by sending \textbf{frames} (byte chunks in layer L2), and a physical-layer protocol (L1) as it defines raw bits are transmitted over the physical medium.
+
+\paragraph{MAC (Media Access Control) Address} Each device on a LAN has a unique identifier called a \textbf{MAC address}. It is a 48-bit address that is assigned to the NIC by the manufacturer. The MAC address is used to identify devices on the same LAN and is used by Ethernet to deliver frames to the correct destination. The 48-bits are usually represented as 6 hexadecimal numbers separated by colons, e.g. \texttt{00:1A:2B:3C:4D:5E}, where the first 3 bytes are the device's manufacturer ID and the last 3 bytes are the device's unique identifier.
 
 
 
 
+\paragraph{Ethernet Frame Structure} An Ethernet frame is the basic unit of data transmission in Ethernet networks. It consists of several fields that provide information about the frame and its contents. The structure of an Ethernet frame is as follows:
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{EthernetFrame.png}
+\caption{Diagram of an Ethernet Frame Structure.}
+\end{figure}
+
+\begin{enumerate}
+    \item \textbf{Preamble:} Its purpose is purely for timing and synchronization. 
+
+    \item \textbf{Start Frame Delimiter (SFD):} The actual frame starts with the very next bit.
+
+    \item \textbf{Destination/Source MAC Address:}
+    This is the MAC of the NIC that the frame is \textit{intended for} (Destination) and the MAC of the NIC that \textit{sent} the frame (Source).
+
+    \item \textbf{Size:} Represents the length of the frame.
+
+    \item \textbf{data:} Contains the actual data from the upper layers, such as an IP packet from the Network Layer (L3).
+
+    \item \textbf{Cyclic Redundancy Check (CRC):} It is an \red{error-detection code}. i.e. the frame is dropped in case of a CRC error.
+
+    \item \textbf{Gap:} After a frame is sent, devices on the network must wait for a brief period before any device is allowed to send the next frame. This gives device interfaces time to process the frame they just received and prepare for the next one.
+\end{enumerate}
 
 
+\noindent\rule{\linewidth}{0.5pt}
 
 
+\section*{The Internet}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+\paragraph{IP \& Routers} The problem for now is LAN hardware communicate through L2, meaning two different LANs cannot communicate with each other. The solution is to use \textbf{routers}, which are devices that connect different networks and \textbf{forward} packets between them. Thus the internet is a inter-network of networks, where each inter-network is connected by routers. This is made possible using the IP (L3) protocol, which provides a way to route packets between different networks. The routers "peel off" the L2 headers of the source LAN and re-encapsulate the data within L2-headers of the destination LAN.  
 
 % ==================================================== 
 % ==================================================== 

@@ -11,6 +11,7 @@
 \graphicspath{ {../Assets/} }
 \usepackage{float}
 \usepackage{caption}
+\usepackage{subcaption}
 
 \usepackage{soul}
 \usepackage{enumitem}
@@ -1401,7 +1402,7 @@ We will focus on Ethernet, which is the most common LAN technology.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{EthernetFrame.png}
+\includegraphics[width=0.7\textwidth]{EthernetFrame.png}
 \caption{Diagram of an Ethernet Frame Structure.}
 \end{figure}
 
@@ -1429,6 +1430,56 @@ We will focus on Ethernet, which is the most common LAN technology.
 \section*{The Internet}
 
 \paragraph{IP \& Routers} The problem for now is LAN hardware communicate through L2, meaning two different LANs cannot communicate with each other. The solution is to use \textbf{routers}, which are devices that connect different networks and \textbf{forward} packets between them. Thus the internet is a inter-network of networks, where each inter-network is connected by routers. This is made possible using the IP (L3) protocol, which provides a way to route packets between different networks. The routers "peel off" the L2 headers of the source LAN and re-encapsulate the data within L2-headers of the destination LAN.  
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.5\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{network-layers.png}
+        \caption{The Internet Layers and Encapsulation.}
+        \label{fig:network-layers}
+    \end{subfigure}
+    \hfill % This creates a horizontal space between the images
+    \begin{subfigure}[b]{0.4\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{hourglass.png}
+        \caption{Hourglass Model of the Internet.}
+        \label{fig:hourglass}
+    \end{subfigure}
+\end{figure}
+
+\paragraph{Hourglass Model} The hourglass model is a conceptual framework that illustrates how the Internet is structured. It shows that the Internet has a narrow waist, which is the IP protocol, and that all other protocols (e.g. TCP, UDP, HTTP) are built on top of it. The model emphasizes the importance of IP as the foundation of the Internet, allowing different protocols to coexist and communicate with each other.
+
+
+
+\paragraph{IP address structure} An IP consists of two parts: \textbf{\blue{Subnet} Part} (high order bits) and \textbf{\blue{Host} Part} (low order bits). The subnet part identifies the network, while the host part identifies the specific device within that network. The subnet part is determined by the \textbf{subnet mask}, which is a 32-bit number that specifies how many bits are used for the subnet part and how many bits are used for the host part. An IP address is \red{always} coupled with a subnet mask; e.g. \code{192.168.1.1/24} means that the first 24 bits are the subnet part and the last 8 bits are the host part. \textbf{Meaning of subnet} is that all devices in the same subnet can communicate with each other directly, without going through a router. i.e. it defines the boundaries of the Ethernet LAN.
+
+
+\paragraph{ARP (Address Resolution Protocol):} \blue{IP => MAC} \\
+ARP is a protocol used to map IP addresses to MAC addresses. When a device wants to communicate with another device on the same local network, it needs to know the MAC address of the destination device. If it only knows the IP address, it \blue{broadcasts} an ARP query packet (containing the destination IP and -1 as the MAC) to the local network, asking "Who has IP address X.X.X.X? Tell me your MAC address." The device with the matching IP address responds with its MAC address, allowing the sender to encapsulate the data in a frame and send it to the correct destination. If the destination is not on the same local network, the sender will get the MAC to \textbf{its default gateway (router)}, its first-hop router, which will then forward the packet to the correct destination network.
+
+\paragraph{NAT (Network Address Translation):} \gray{private IPs} \\
+NAT is a technique used to allow multiple devices on a local network to share a single public IP address. NAT defines new private IP addresses for each device on the local network, allowing them to communicate with each other using these private addresses. When a device wants to communicate with the outside world, NAT translates its private IP address to the public IP address, allowing the device to access the internet. This helps conserve the limited pool of public IP addresses and provides an additional layer of security by hiding the internal network structure from external entities. To do so, NAT maintains a mapping between pairs of (private IP addresses + port) and (public IP address + port).
+
+
+\paragraph{DHCP (Dynamic Host Configuration Protocol):} \blue{get an IP} \\
+DHCP is a \red{L5 protocol} used to dynamically assign IP addresses to devices on a network. The goal of DHCP server is to \blue{allow client's host to dynamically get IP address when joining LAN}, which can provide: (1) subnet mask, (2) Default gateway (first hop router), (3) Name + IP of DNS server. DHCP uses \textbf{UDP} to communicate allowing the ability to broadcast to all hosts in LAN. When a device connects to a network, it sends a DHCP request to the DHCP server, which responds with an available IP address and other configuration information. 
+
+
+
+
+
+
+% =====================================================
+% =========== Lecture Virtual Memory ======================
+% =====================================================
+
+
+
+\newpage
+\Topic{Virtual Memory}
+
+
 
 % ==================================================== 
 % ==================================================== 

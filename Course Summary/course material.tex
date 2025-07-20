@@ -20,6 +20,7 @@
 
 \usepackage{amsthm}
 \usepackage{amsmath}
+\usepackage{multicol}
 
 
 
@@ -1356,7 +1357,7 @@ The Network Layer is responsible for routing data between devices on different n
 
 Each IP address corresponds to a single host, unlike domain names. Domain names can point to multiple IP addresses (e.g. load balancing), while each IP address is unique to a specific host. The opposite is also not true, i.e. one host can have multiple IP addresses. For simplicity we will assume there's a 1-to-1 host-to-IP mapping.
 
-Note: IP is used to identify host machines, while TCP/UDP are used to identify individual communication channels of processes on the host.
+Note: IP is used to identify host machines, while ports are used to identify individual communication channels of processes on the host.
 
 
 
@@ -1463,7 +1464,7 @@ NAT is a technique used to allow multiple devices on a local network to share a 
 
 
 \paragraph{DHCP (Dynamic Host Configuration Protocol):} \blue{get an IP} \\
-DHCP is an \red{L5 protocol} used to dynamically assign IP addresses to devices on a network. The goal of DHCP server is to \blue{allow client's host to dynamically get IP address when joining LAN}, which can provide: (1) subnet mask, (2) Default gateway (first hop router), (3) Name + IP of DNS server. DHCP uses \textbf{UDP} to communicate allowing the ability to broadcast to all hosts in LAN. When a device connects to a network, it sends a DHCP request to the DHCP server, which responds with an available IP address and other configuration information. 
+DHCP is an \red{L5 protocol} used to dynamically assign IP addresses to devices on a network. The goal of DHCP server is to \blue{allow client's host to dynamically get IP address when joining LAN}, which can provide: \ul{(1) subnet mask, (2) Default gateway (first hop router), (3) Name + IP of DNS server for client}. DHCP uses \textbf{UDP} to communicate allowing the ability to broadcast to all hosts in LAN. When a device connects to a network, it sends a DHCP request to the DHCP server, which responds with an available IP address and other configuration information. 
 
 
 
@@ -1779,6 +1780,332 @@ A completely different architecture, but similar concepts, used in IBM PowerPC p
 \Topic{Storage}
 
 
+\section*{Files \& Directories}
+
+\paragraph{File} A file is a logical unit of information which is an ADT (abstract data type), with a name, content, metadata, and can be manipulated via operations (read, rename,...)
+
+\paragraph{File Metadata} Metadata is information about the file and its content, such as: (1) file name, (2) file size, (3)  owner, (4) permissions, (5) timestamps (creation, modification, access), (6) physical location, (7) file type.
+
+\paragraph{File Descriptors} A file descriptor (FD) is a nonnegative integer that uniquely identifies an open file within a process. An FD is an index into a per-process file descriptor table (FDT), which maps the FD to a file object in the kernel. \blue{Threads share} the FDT of their process. Some POSIX syscalls operate on FDs and others operate on file names (chmod, unlink, ...).
+
+\paragraph{File Operations} The following are the most common file operations:
+\begin{itemize}
+    \item \textbf{Creation} (syscalls: \texttt{creat}, \texttt{open}; C: \texttt{fopen})
+    \begin{itemize}
+        \item Associate with a name; allocate physical space (at least for metadata)
+    \end{itemize}
+
+    \item \textbf{Open} (\texttt{open}; C: \texttt{fopen}, \texttt{fdopen})
+    \begin{itemize}
+        \item Load required metadata to allow process to access file
+    \end{itemize}
+
+    \item \textbf{Deletion} (\texttt{unlink}, \texttt{rmdir}; C: \texttt{remove})
+    \begin{itemize}
+        \item Remove name/file association \& (possibly) release physical content
+    \end{itemize}
+
+    \item \textbf{Close} (\texttt{close}; C: \texttt{fclose})
+    \begin{itemize}
+        \item Mark end of access; release associated process resources
+    \end{itemize}
+
+    \item \textbf{Rename} (\texttt{rename}; -)
+    \begin{itemize}
+        \item Change associated name
+    \end{itemize}
+
+    \item \textbf{Stat} (\texttt{stat}, \texttt{lstat}, \texttt{fstat}; -)
+    \begin{itemize}
+        \item Get the file's metadata (timestamps, owner, etc.)
+    \end{itemize}
+
+    \item \textbf{Chmod} (\texttt{chmod}, \texttt{fchmod}; -)
+    \begin{itemize}
+        \item Change readable, writable, executable properties
+    \end{itemize}
+    
+    \item \textbf{Chown} (\texttt{chown}, \texttt{fchown}; -)
+    \begin{itemize}
+        \item Change ownership (user, group)
+    \end{itemize}
+
+    \item \textbf{Seek} (\texttt{lseek}; C: \texttt{fseek}, \texttt{rewind})
+    \begin{itemize}
+        \item Each file is typically associated with a "current offset"
+        \item Pointing to where the next read or write would occur
+        \item \texttt{lseek} allows users to change that offset
+    \end{itemize}
+
+    \item \textbf{Read} (\texttt{read}, \texttt{pread}, \texttt{readv}; C: \texttt{fscanf}, \texttt{fread}, \texttt{fgets})
+    \begin{itemize}
+        \item Reads from "current offset"; \texttt{pread} gets offset from caller
+        \item Need to provide buffer \& size
+        \item "v" = vector of buffer+size; this version is called "scatter-gather" (why?)
+    \end{itemize}
+
+    \item \textbf{Write} (\texttt{write}, \texttt{pwrite}, \texttt{writev}; C: \texttt{fprintf}, \texttt{fwrite}, \texttt{fputs})
+    \begin{itemize}
+        \item Change content of file; \texttt{pwrite} gets the offset explicitly; v=vector
+        \item Likewise, need to provide buffer \& size
+        \item If the current offset (or the given offset in the case of \texttt{pwrite}) points to end of file, then file grows
+    \end{itemize}
+
+    \item \textbf{Sync} (\texttt{sync<fs>}, \texttt{fsync<fd>}; $\neq$ C: \texttt{fflush})
+    \begin{itemize}
+        \item Recall that
+        \begin{itemize}
+            \item All disk I/O goes through OS "page cache", which caches the disk
+            \item OS sync-s dirty pages to disk periodically (every few seconds)
+        \end{itemize}
+        \item Use this operation if we want the sync now
+        \item `sync` is for all the filesystem, and `fsync` is just for a given FD
+        \item Sync $\neq$ fflush; the latter flushes user-space (\texttt{fprintf}, \texttt{cout}) buffers to the kernel
+    \end{itemize}
+
+    \item \textbf{Lock} (\texttt{flock}, \texttt{fcntl}; C: \texttt{flockfile})
+    \begin{itemize}
+        \item "Advisory" lock (= processes can ignore it, if they wish)
+        \item There exists mandatory locking support (in Linux and other OSes)
+        \begin{itemize}
+            \item E.g., every open implicitly locks; and can't open more than once
+        \item But that's not POSIX
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+
+\paragraph{File Types} In UNIX (POSIX) we classify files into:
+\begin{itemize}
+  \item \textbf{Regular files} - Contain user data, such as text files, binary files, etc. They are the most common type of file.
+  \item \textbf{Directories} - Special files that contain a list of files and
+  \item \textbf{Symbolic links (soft links)} - Special files that point to another file or directory, allowing for easy access to files in different locations.
+  \item \textbf{FIFOs (named pipes)} - Special files that allow for inter-process communication (IPC) by providing a way for processes to communicate with each other through a named pipe.
+  \item \textbf{Sockets} - Special files that allow for communication between processes over a network. They are used for network communication and can be either stream-oriented (TCP) or datagram-oriented (UDP).
+  \item \textbf{Device files} - Special files that represent hardware devices, such as disks, printers, and terminals. They allow processes to interact with hardware devices as if they were regular files. Can be either character devices (e.g., terminals) or block devices (e.g., disks).
+\end{itemize}
+
+
+\paragraph{Magic Numbers} Magic numbers are a semi-standard Unix way to tell the type of a file by looking at the first few bytes of the file. Each file type has a unique magic number that identifies it. For example, a PDF file starts with the ASCII string: \code{\%PDF}. Not all files have magic numbers, but many do, since nowadays it is a more complex scheme. 
+
+
+\paragraph{File Protection (Ownership \& Mode)} For each file, POSIX divides users into 3 classes: "User" (the owner of the file), "group", "all" (all other users). Each class has 3 permissions: "read", "write", "execute". The file mode is a 9-bit number, where each bit represents a permission for a class. The first 3 bits are for the user, the next 3 bits are for the group, and the last 3 bits are for all users. \blue{Note:} Users can belong to several groups, but not files.
+
+Other operating systems (NOT POSIX) use \blue{Access Control Lists (ACLs)}, where it allows a finer more detailed control of what each user/group can do (delete, rename,...).
+
+
+\paragraph{Directories} A filesystem has a hierarchial (tree) structre of directories, where each directory can contain files and subdirectories. Each directory is a special file that contains a list of files and subdirectories, along with their metadata. 
+
+\paragraph{Absolute \& Relative File Paths} \blue{File name = File path = path}. Every process has its own "working directory" (WD). A path is \blue{absolute} if it starts with \blue{"/"} (the root directory)\gray{, e.g. "/users/admin/jon"}. A path is \blue{relative} (to the WD) otherwise\gray{, e.g. if WD="/home" then "admin/jon" is the relative to "/home/admin/jon".}
+
+
+\paragraph{Directory Operations} Each directory contains 2 special subdirectories, \blue{"."}=Current directory, \blue{".."}=Parent directory. To create a directory we use \code{mkdir}, and to remove an empty one \code{rmdir}.
+
+
+
+\paragraph{Hard Links} \red{File \(\neq\) file name}. They are \red{not} the same thing, in fact, the name is \red{not} even part of the file's metadata! A file can have multiple names, and therefore appearing in multiple unrelated places. Every file has a "reference count" to keep track of how many hard links it has, once it reaches zero, \textit{if no process is using it through FDs}, then and only then we can remove the file's content. 
+
+Hard links to directories are usually disallowed, since it causes infinite circular looping and nesting. However, remember that each directory contains "." \& ".." hence each directory has a minimum of 2 hard links, and a maximum depending on the number of subdirectories it contains.
+
+\red{Note:} Hard links can only exist on the same filesystem, as they use the same \code{file\_object} \gray{or as seen later, same \code{inode}}.
+
+\paragraph{Symbolic Links} A symbolic link (or soft link) is a special file that points to another file or directory. It is a way to create a shortcut to a file or directory, allowing you to access it from a different location. Symbolic links are not hard links, and they can point to files or directories that do not exist. \textbf{Soft links contain target file path, and not a pointer to a file object like hard links}. They are no counted in the target file's ref count, they can refer to files, directories, and even files outside the filesystem. (since they only save a path)
+
+
+When applying a syscall to a symlink, the syscall is applied to the target file. Except, (1) unlink, which removes the soft link. (2) symlink-specific syscall, such as symlink \gray{(create a symlink)} and readlink \gray{(read the content of the symlink, i.e. the path of the target file)}.
+
+
+
+\paragraph{inode} An inode (index node) is a data structure used to represent a file in a filesystem. Each file has its own (single) inode, which can be thought of as the "file". File names (hard links) point to inodes, and the inode contains all metadata of the file.
+
+Note: file objects (which represent open files) are not the same as inodes, as they contain additional information such as the current offset, number of file descriptors pointing to it, etc. However, file objects point to the inodes, as they are the ones holding to the actual data.
+
+\paragraph{inode \code{*stat} syscall} POSIX gurantees that at leas the following fields will be found in the stat structure and have meaningful values:
+
+\begin{tabular}{r l l}
+1. & \texttt{st\_dev} & ID of device containing file \\
+2. & \texttt{st\_ino} & inode number, unique for st\_dev \\
+3. & \texttt{st\_mode} & specifies file type \& permissions (S\_ISREG(m), ... \\
+4. & \texttt{st\_nlink} & number of hard links to the file \\
+5. & \texttt{st\_size} & file size in bytes \\
+6. & \texttt{st\_uid} & user ID of owner \\
+7. & \texttt{st\_gid} & group ID of owner \\
+8. & \texttt{st\_ctime} & last time \blue{metadata (=inode) or data \textbf{changed}} \\
+9. & \texttt{st\_mtime} & last time \blue{data \textbf{changed}} \\
+10. & \texttt{st\_atime} & last time \blue{metadata (=inode) or data \textbf{accessed}} \\
+11. & \texttt{st\_blksize} & block size of this file object (preferred size for I/O ops) \\
+12. & \texttt{st\_blocks} & number of sectors allocated for this file object \\
+\end{tabular}
+
+\textbf{\code{lstat}} is like \code{stat} but it applies to the symbolic links when used on one, i.e. it returns the metadata of the symlink, not the target file. The only guaranteed metadata fields to be found are: \code{st\_mode} \gray{(which will specify it is a symlink)} and \code{st\_size} \gray{(which will be the length of the symlink's target path)}.
+
+\red{It is not} specified in POSIX whether a symlink gets an inode or not (could be either
+ depending on implementaion).
+
+
+\paragraph{Dirents (Directory Entries)} A directory file is compromised of directory entries (dirents), which point to the inodes of the files and subdirectories it contains. Each dirent contains the following fields: (1) inode number, (2) file type, (3) file name, (4) offset to the next dirent, (5) length of the dirent. In \textbf{FAT} \gray{(more on that later)} dirents are the actual files as there are no inodes, preventing multiple hard links.
+
+
+\paragraph{Path Resolution} Resolving a path means finding the inode of the file or directory that the path points to. The algorithm that syscalls use to resolve paths is called \textbf{\blue{"namei"}}. Each path is compromised of "atoms", where an atom is a single file or directory name in the path. The algorithm works as follows:
+\begin{lstlisting}[language=C, caption={Path Resolution Algorithm (namei)}, label={lst:namei}]
+int my_open(char *fname) {
+  if (fname is absolute){
+    // Start from the root directory
+    chdir("/");
+    make fname relative;
+  }
+  foreach atom in fname do // e.g. atoms of "x/y" are "x" and "y"
+    if (is symlink) SYS (fd = my_open(atom symlink target))
+    else            SYS (fd = open(atom)) // this checks permissions too
+
+    if (!terminal){
+      // If not the last atom, change the current directory to the opened one
+      chdir(fd directory);
+      close(fd);
+    }
+    else
+      // If terminal, return the file descriptor of the last opened file
+      break;
+  return fd;
+}
+\end{lstlisting}
+
+For each non-symlink atom in the path, a user must be able to \ul{search} all directories leading to the file. This means that the user must have the appropriate permissions to access each directory in the path. \blue{x} bit = \textbf{search} allows the user to search for files in the directory. \blue{r} bit = allows the user to list the contents of the directory (with \code{ls} for example). \blue{w} bit = allows the user to create or delete files in the directory.
+
+
+
+
+
+\section*{File Systems}
+
+\paragraph{HDD Latency} HDD latency is \textbf{seek time} + \textbf{rotational latency}. Seek time is the time it takes for the read/write head to move to the correct track on the disk. Rotational latency is the time it takes for the disk to rotate to the correct sector. 
+
+
+\paragraph{Sectors \& Blocks} A disk is divided into \textbf{sectors}, which are the smallest addressable units on the disk. Each sector is typically \blue{512 bytes}\gray{ or 4096 bytes in size}. Sectors are grouped into \textbf{blocks}, which are the equivalent of pages in memory, thus each block is \blue{4KB} in size, and \blue{8 sectors}.
+
+
+\paragraph{Partitions \& Mounts} A disk can be divided into \textbf{partitions} using \code{fdisk}, which are contiguous disjoint part of the disk that can host a filesystem. Disks are typically names "/dev/sda","/dev/sdb", while partitions are named "/dev/sda1", "/dev/sda2", etc. 
+
+To create an empty filesystem on a partition we use \blue{\code{mkfs}}, which then after it need to be \blue{\code{mount}}ed to make it accessible. Mounitng is done using \blue{\code{mount -t <filesystem> <partition> <path>}} which will then make the filesystem reachable from \code{<path>}. If any files existed at \code{<path>} before mounting, they will become unavailable until we unmount the filesystem.
+
+
+
+
+\paragraph{\blue{VSFS} (Very Simple File System)} Blocks are divided into 5 categories:
+\begin{itemize}
+  \item \textbf{Superblock (S)} - Contains metadata about the filesystem, such as the magic number of the filesystem, the inode of the root directory "/", amount of inodes and data blocks, start of inode table, etc. It is used when mounting the filesystem.
+
+  \item \textbf{Inode Table (I)} - Contains the inodes of all files in the filesystem.
+
+  \item \textbf{Data Blocks (D)} - Contains the actual data of the files in the filesystem.
+
+  \item \textbf{bitmap of allocated inodes (i)} - A bitmap that indicates which inodes are allocated and which are free. Each bit corresponds to an inode.
+
+  \item \textbf{bitmap of allocated data blocks (d)} - A bitmap that indicates which data blocks are allocated and which are free. Each bit corresponds to a data block.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{VSFS_layout.png}
+    \caption{VSFS File System Layout}
+    \label{fig:vsfs}
+\end{figure}
+
+\paragraph{VSFS - Finding an inode} to find the address of an inode, we can simply do
+\begin{equation*}
+  \text{inodeAddr} = \text{inodeStartAddr} + \text{inodeSize} \times \text{inodeIndex}
+\end{equation*}
+and to find the block:
+\begin{equation*}
+  \text{blockAddr} = \text{inodeAddr}/\text{blockSize}
+\end{equation*}
+
+\paragraph{Pointers to data} in VSFS could be:
+\begin{itemize}
+  \item \textbf{Direct:} An array of pointers pointing directly to all data blocks (limited amount \(\Longrightarrow\) limits file size)
+
+  \item \textbf{Indirect:} Multi-level array, like in virutal memory page tables.
+
+  \item \textbf{Linked List:} Linked list of pointers from one data block to the next
+\end{itemize}
+
+
+
+
+\begin{center}
+  \begin{minipage}[t]{0.6\textwidth}
+    \vspace{0pt} % force top alignment
+    \textbf{Multi-Level Index:} Each inode will have an array of \blue{15} pointers such that: (0-11) The first twelve are \blue{direct} pointers to data blocks, (12) a \blue{single-indirect} pointer that points to a block completely comprised of pointers to data blocks, (13) a \blue{double-indirect} pointer that points to a block that contains pointers to single-indirect blocks, and (14) a \blue{triple-indirect} pointer that points to a block that contains pointers to double-indirect blocks. \red{Note:} each indirect access requires an additional disk access, so it is slower than direct access. 
+  \end{minipage}%
+  \hspace{1em}
+  \begin{minipage}[t]{0.35\textwidth}
+    \vspace{0pt} % force top alignment
+    \centering
+    \includegraphics[width=0.8\textwidth]{multi-level-index.png}
+  \end{minipage}
+\end{center}
+
+
+
+
+\paragraph{Extents} An extent is a contiguous block of data blocks that are allocated together. Instead of having a separate pointer for each data block, an extent is a single pointer that points to the first block of the extent and contains the length of the extent. This allows for more efficient allocation and reduces fragmentation. Extents are used in modern filesystems such as ext4. 
+
+\begin{itemize}
+  \item ext2 = the "extended file system", does not support extents.
+  \item ext3 = ext2 + journaling. journaling = keeping track of uncommitted changes.
+  \item ext4 = ext3 + extents. (so "ext" name unrelated to "extent")
+\end{itemize}
+
+
+\paragraph{FAT (File Allocation Table)} Keeping track of a linked list using the data blocks is inefficient. So to solve that, FAT keeps a file allocation table that for each data block, it registers that pointer to the next data block from the same file. The starting block for the file is pointed to by the dirent, which holds all of the metadata too, so no inodes are needed! (but no multipicity of hard links is allowed)
+
+The \green{advantage} for FAT is that it will be copied to (cached in) the memory, which allows fast lookup in the table. The \red{disadvantage} is that it can become huge.
+
+
+
+\section*{RAID}
+
+\paragraph{RAID (Redundant Array of Independent Disks)} RAID is a technology that allows us to combine multiple physical disks into a single logical disk. It is based on \blue{striping}, which is the process of dividing data into blocks and distributing them across multiple disks. And \blue{redundancy}, which is the process of storing multiple copies of data to protect against disk failures. 
+
+
+\begin{itemize}
+  \item \textbf{RAID 0} - Striping without redundancy.\\
+  \begin{itemize}
+    \item   Files are stripped in \textbf{block} resolution.
+    \item   Pros: Increased performance, as multiple disks can be accessed in parallel.
+    \item   Cons: No redundancy, if one disk fails, all data is lost. and increased chance of failure.
+  \end{itemize}
+
+  \item \textbf{RAID 1} - Mirroring.\\
+  \begin{itemize}
+    \item Files are striped across half the disks, and each block is mirrored on the other half. 
+    \item Pros: Increased reliability, as data is stored on multiple disks. Read performance is as good as RAID 0.
+    \item Cons: Write performance is slower than RAID 0, as data must be written to multiple disks.
+  \end{itemize}
+
+  \item \textbf{RAID 4} - Dedicated parity disk.\\
+  \begin{itemize}
+    \item Data blocks are striped across multiple disks, and a dedicated parity disk is used to store parity information. \gray{RAID 2 is bit resolution, RAID 3 is byte resolution.}
+    \item Pros: Improved read performance, as data can be read from multiple disks in parallel. Fault tolerance, as data can be reconstructed from parity information.
+    \item Cons: \textbf{"small write problem"}, as writing to a single block requires reading the old data + the parity block, computing the new parity, and writing both the data and the parity block. However, if we write to the entire stripe (whole block on each disk) then we don't have to read the parity to update it, hence "small write problem".
+  \end{itemize}
+
+  \item \textbf{RAID 5} - Distributed parity.\\
+  \begin{itemize}
+    \item Data is striped across multiple disks, and parity block is distributed each time on a different disk.
+    \item Pros: Like RAID 4 + No hotspot disk.
+  \end{itemize}
+
+  \item \textbf{RAID 6} - Double distributed parity.\\
+  \begin{itemize}
+    \item Data is striped across multiple disks, and two independent parity blocks are distributed across the disks.
+    \item Pros: Fault tolerance for up to two disk failures, as data can be reconstructed from the remaining disks. 
+    \item Cons: wastes \(2/N\) instead of \(1/N\) of the disk space for parity (compared to RAID 5).
+  \end{itemize}
+
+  \item \textbf{RAID n+k} - n data blocks and k parity blocks (in each stripe).
+\end{itemize}
+
+\paragraph{Erasure (n+k) vs. Replication (r)} Erasure is the "k parity" blocks, which allows us to reconstruct the data from the remaining blocks. Replication is duplicating the data \(r\) times. Erasure is less wasteful but slower, while replication is faster but more wasteful.
 
 
 

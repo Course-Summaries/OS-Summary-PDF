@@ -21,6 +21,7 @@
 \usepackage{amsthm}
 \usepackage{amsmath}
 \usepackage{multicol}
+\usepackage{multirow}
 
 
 
@@ -213,6 +214,9 @@ Notable services provided by an OS:
 
 
 
+\paragraph{CPL (Current Privilege Level)} The CPU defines two levels: (1) User mode, CPL=3, (2) Kernel mode, CPL=0. \blue{Privileged instructions} require kernel mode to execute them, such as disk access. Syscalls (system calls) our only gateway as users to execute commands in kernel mode, where a syscall raises the CPL to 0 and executes a specific request.
+
+
 % =====================================================
 % ================== Lecture 2 ========================
 % =====================================================
@@ -230,12 +234,12 @@ Notable services provided by an OS:
       \item \textbf{Process state:} The current state of the process, including the program counter, registers, and memory management information.
       \item \textbf{Process control block (PCB):} A data structure used by the OS to manage the process, containing information such as process ID, process state, CPU registers, memory management information, and I/O status information.
 
-            A process \ul{doesn't have direct access to its PCB}, it is managed by the OS (kernel space), i.e. needs privilege level 0 (kernel mode) to access it.
+            A process \ul{doesn't have direct access to its PCB}, it is managed by the OS (kernel space), which is \code{task\_struct current}.
 
             Each PCB contains: \code{real\_parent}, \code{parent}, \code{children}, \code{siblings},...\\
             Each process has a \code{task\_struct current} pointer to its PCB.
 
-      \item \textbf{Process ID (PID):} A unique identifier assigned to each process by the OS. The PID is used by the OS to manage the process and is used in system calls to refer to the process.
+      \item \textbf{Process ID (PID):} A unique \blue{32-bit} identifier assigned to each process by the OS. Typically only the \blue{15 LSB bits} are used. The OS keeps a hash table of \(\text{PID}\rightarrow\text{PCB}\).
     \end{itemize}
   \end{minipage}%
   \hspace{1em}
@@ -267,6 +271,20 @@ A process can be in one of the following states:
 \end{figure}
 
 
+\paragraph{\code{state} Field in PCB} Each PCB keeps a \blue{32bit} \code{state} variable where each bit indicates one of the following states:
+\begin{enumerate}
+  \item \code{\textbf{TASK\_RUNNING :}} The task is either running or ready to run
+
+  \item \code{\textbf{TASK\_ZOMBIE :}} The task has terminated but is still in the system
+
+  \item \code{\textbf{TASK\_INTERRUPTIBLE :}} The task is waiting for an event to occur, but it can be interrupted by signals and come back to TASK\_RUNNING state.
+
+  \item \code{\textbf{TASK\_UNINTERRUPTIBLE :}} The task is waiting for an event to occur, but it cannot be interrupted by signals. \gray{e.g. page fault, you can't run anything (or handle any other signals) until the page fault is handled to an end.}
+
+  \item \code{\textbf{TASK\_STOPPED :}} The task has been stopped in a controlled manner by a \green{different} task, e.g. by a debugger or by the user pressing Ctrl+Z in the terminal.
+\end{enumerate}
+
+
 As we saw in "ATAM", each process can only access a certain set of utilities and functions, those who require privilege level 3 (user mode). So to access the OS services, a process must use \textbf{system calls} which are functions provided by the OS that allow processes to request services from the OS. System calls are typically implemented in the OS kernel and provide a controlled interface for processes to interact with the OS.
 
 \vspace{1em}
@@ -281,7 +299,7 @@ As noted above, each process must be \code{wait()}ed for by its parent process t
 
 \paragraph{Process Management} The OS offers various system calls to manage processes, including: \gray{(More details in the functions reference)}
 \begin{itemize}
-  \item \texttt{fork()}: Creates a new process by duplicating the calling process. The new process is called the child process, and the calling process is called the parent process.
+  \item \texttt{fork()}: Creates a new process by duplicating the calling process. The new process is called the child process, and the calling process is called the parent process. For the child, the return value is \code{0}, and for the parent its the pid of the child, (on failure \(-1\) for parent).
   \item \texttt{exec()}: Replaces the current process image with a new process image, effectively running a different program in the same process.
   \item \texttt{wait()}: Suspends the calling process until one of its children terminates.
   \item \texttt{exit()}: Terminates the calling process and releases its resources.
@@ -306,6 +324,9 @@ To run a process as a daemon use \code{nohup <command> \&}.
 Daemon names usually end with the letter "d", e.g. \texttt{sshd} (SSH daemon), \texttt{httpd} (HTTP daemon), etc.
 
 
+\paragraph{Idle \& Init} The \code{idle} process is the first one that the system loads, with \code{pid=0}, and it utilized \code{hlt} when no process is ready to run. The next one is \code{init} which is created by idle, with \code{pid=1}, and it created all other processes. Every orphan process becomes the child of \code{init}.
+
+\paragraph{Process List} The OS maintains a \blue{cyclic double linked list} of all processes, allowing for efficient process management and scheduling. The list starts with \code{idle} then \code{init}, where \code{idle} is the head of the list pointed to by \blue{\code{init\_task}}.
 
 
 % ===================================================== Signals Section
@@ -314,7 +335,7 @@ Daemon names usually end with the letter "d", e.g. \texttt{sshd} (SSH daemon), \
 \paragraph{Signals}
 Signals are "notifications" sent to a process to asynchronously notify it that some event has occurred.
 
-* Receiving a signal only occurs when returning from kernel mode, which in turn invokes the corresponding signal handler.
+* Receiving a signal only occurs when returning from kernel mode, which in turn invokes the corresponding signal handler, i.e. \blue{signal handling is in user mode}.
 
 ** Default signal handling actions: Either die or ignore
 
@@ -323,7 +344,7 @@ Signals are "notifications" sent to a process to asynchronously notify it that s
 
 \vspace{1em}
 
-Each signal has a name, a number, and a default action. All but 3 signals can be blocked, i.e. ignored until the process is ready to handle them. The 3 signals that cannot be blocked are:
+Each signal has a name, a number (1-31), and a default action. All but 3 signals can be blocked, i.e. ignored until the process is ready to handle them. The 3 signals that cannot be blocked are:
 \begin{itemize}
   \item \texttt{SIGKILL}: Used to forcefully terminate a process. (Process becomes a zombie)
   \item \texttt{SIGSTOP}: Used to suspend the receiving process. (Make it sleep) The signals is sent when the user presses Ctrl+Z in the terminal. {\color{gray}Note: In truth Ctrl+Z sends the \texttt{SIGTSTP} signal, however, we don't learn about the differences between the two signals in this course.}
@@ -333,7 +354,7 @@ Each signal has a name, a number, and a default action. All but 3 signals can be
 
 \paragraph{Signal Handling}
 A process can define a custom signal handler for a specific signal using the \texttt{signal()} or \texttt{sigaction()} {\color{gray}preferred} system calls.
-To ignore a signal, the process can set its handler to \texttt{SIG\_IGN}. To restore the default action for a signal, the process can set its handler to \texttt{SIG\_DFLT}.
+To ignore a signal, the process can set its handler to \texttt{SIG\_IGN}. To restore the default action for a signal, the process can set its handler to \texttt{SIG\_DFLT}. \blue{code{signal\_struct}} is the kernel structure in PCB that holds the signal handlers for the process.
 
 \paragraph{Signal Masking}
 A process can block signals using the \texttt{sigprocmask()} system call, which allows the process to specify a set of signals to block. This is allows the process to overcome \textit{Race Conditions} resulted from the asynchronous nature of signals.\\
@@ -341,10 +362,11 @@ A process can block signals using the \texttt{sigprocmask()} system call, which 
 \texttt{Blocked Signals} = mask array.\\
 \texttt{Pending Signals} = signals that were sent to the process while it was blocked, and will be handled when the process unblocks them.
 
-\newpage
+When handling a signal, the handler masks signals of the same type (of the one being handled), to prevent problems of reentrancy.
+
 \paragraph{Common Signals} the following are some of the most common signals:
 \begin{enumerate}
-  \item \textbf{\code{SIGSEGV, SIGBUS, SIGIILL, SIGFPE}}: These are driven by the associated \blue{(HW) interrupts} - The OS gets the associated interrupt, then the OS interrupt handler sees to it that the misbehaving process gets the associated signal, lastly the signal handler is invoked.
+  \item \textbf{\code{SIGSEGV, SIGBUS, SIGILL, SIGFPE}}: These are driven by the associated \blue{(HW) interrupts} - The OS gets the associated interrupt, then the OS interrupt handler sees to it that the misbehaving process gets the associated signal, lastly the signal handler is invoked.
         \begin{itemize}
           \item \texttt{SIGSEGV}: Segmentation violation (illegal memory reference, e.g., outside an array).
           \item \texttt{SIGBUS}: Dereference invalid address (null/misaligned, assume it's like SEGV).
@@ -484,16 +506,23 @@ Processes \red{don't} share \code{PCB} nor \code{FDT} but they \blue{can share f
 
 
 
-\paragraph{Pipes} A pipe is a unidirectional communication channel between two processes, allowing one process to send data to another. Pipes are a pair of two file descriptors \code{int pipe\_fd[2]}. Each integer is a handle to a kernel communication object, \ul{which is a buffer that holds the data being sent between the two processes}.
+\paragraph{Pipes} A pipe is a unidirectional communication channel between two processes, allowing one process to send data to another. Pipes are a pair of two file descriptors \code{int pipe\_fd[2]}. Each integer is a handle to a kernel communication object ("file"), \ul{pipes reside }\red{\ul{only}}\ul{ on DRAM (memory) and never on the disk, and they are not in the filesystem}. \gray{(pipes are anonymous shared pages)}
 \begin{itemize}
   \item \code{pipe\_fd[0]} = read side of the communication channel.
   \item \code{pipe\_fd[1]} = write side of the communication channel.
   \item Everything written via \code{pipe\_fd[1]} can be read via \code{pipe\_fd[0]}.
-  \item \red{Blocking}: If the read side is empty, the read operation will block until data is written to the write side. If the write side is full, the write operation will block until space is available.
+  \item \red{Blocking}: If the read side is empty, the read operation will block until data is written to the write side. If the write side doesn't have enough space for \ul{all} the data, the write operation will block until space is available.
+  \item \red{EOF}: If the write side is closed and the pipe is empty, the read operation will return 0, indicating EOF (End of File). 
   \item \red{\code{SIGPIPE}}: Writing to a pipe whose read end is \code{close()}d will result in a \code{SIGPIPE} signal.
 \end{itemize}
 
+\paragraph{FIFO (Named Pipe)} A FIFO is a named pipe that allows for communication between unrelated processes (no family connection), i.e. it's a public "file". FIFO is a file even though \ul{it is NOT on the disk}, though it can be swapped there. 
 
+To make a FIFO, use the \code{mkfifo(const char *pathname, mode\_t mode)} system call, which creates a special file in the filesystem with path \code{pathname} and permissions \code{mode}. The FIFO can then be opened by any process using the \code{open()} system call, just like a regular file. The FIFO is bidirectional, thus having one FD. 
+
+A process that opens FIFO for read only, will block until another process opens it for write, and vice versa. If one opens it as both read \& write (O\_RDWR) then it will \red{not} be blocking. *The read write rules are similar to the one of pipe.
+
+FIFOs are \red{not} removed from the system automtically (unlike pipes whom do), so they have to be \textit{explicitly} removed by \code{rm}\code{unlink} for example. Meaning a closed FIFO can be reopened until removed completely.
 
 \begin{samepage}
   \begin{center}
@@ -552,6 +581,192 @@ Processes \red{don't} share \code{PCB} nor \code{FDT} but they \blue{can share f
 \paragraph{User Level Threads (ULTs)} are threads that are managed by the user-level library, rather than the OS kernel. ULTs are not visible to the OS, which means that the OS does not know about them and does not schedule them. This allows for faster context switching between ULTs, but it also means that the OS cannot take advantage of multiple CPU cores to run ULTs in parallel.
 
 The usage of ULTs is mainly for concurrent programming, where we want multiple multiple tasks to progress in parallel without the overhead of kernel-level threads.
+
+
+
+
+
+% =====================================================
+% =============== BOOT AND MODULES ====================
+% =====================================================
+
+
+\newpage
+\Topic{Boot \& Modules}
+
+\section*{Booting the OS}
+
+\paragraph{Operating System at Power ON} When powering on a PC, the OS has yet to load into the memory, as it resides on the disk. So we need to load the OS from the disk to the memory, but we need the OS to do that! So the solution is hierarchal booting: 
+\begin{enumerate}
+  \item The \blue{BIOS} code is loaded into the memory (DRAM) and the CPU starts executing it.
+
+  \item The BIOS loads \blue{the first sector of the disk (MBR)} to the memory
+
+  \item The MBR code loads the \blue{boat loader}
+
+  \item The boot loader loads the \blue{kernel} of Linux
+
+  \item The kernel loads the init process (\code{/init}) and runs it
+\end{enumerate}
+
+
+\paragraph{BIOS (Basic Input/Output System)} The BIOS is located in the motherboard, loaded to the same memory location always, and is the first code that runs when the computer is powered on. It performs the following tasks:
+\begin{itemize}
+  \item Identify the hardware components of the system that are connected.
+  \item Check if basic hardware components are working properly (screen, keyboard, etc)
+  \item Search for the device (from a pre-defined list) that enables booting (bootable device)
+  \item If the device is not found, the BIOS shows an error message and stops the booting process. Otherwise, it loads the \ul{first sector} of the device to a constant place in memory.
+\end{itemize}
+
+
+\paragraph{MBR (Master Boot Record)} The bootable device holds in the first sector (512 bytes), the MBR, which is a very basic assembly program that is used to load the boot loader, since it requires more space than the MBR can provide. 
+
+\paragraph{Boot Loader (Grub)} GRUB (GRand Unified Bootloader) is a boot loader package from the GNU Project. It allows users to choose between multiple operating systems at boot time and can load a variety of operating systems, including Linux, Windows, and others. 
+
+
+\paragraph{Loading the Kernel} The boot loader loads the kernel in the following steps:
+\begin{enumerate}
+  \item Load the compressed kernel image from the disk to the memory.
+  \item Load a basic initial filesystem (initramfs or initrd)
+  \begin{itemize}
+    \item The initial filesystem includes the necessary modules for the linux kernel to find and load the real filesystem.
+  \end{itemize}
+  \item The kernel runs the script \code{/init} (typically a shell script) from the initial filesystem.
+  \item The \code{/init} script loads the necessary drivers and mounts the real filesystem instead of the initial one.
+  \item After the real filesystem is mounted, the linux kernel runs the \code{/sbin/init} program.
+\end{enumerate}
+
+
+\section*{Modules}
+
+\paragraph{Kernel Modules} are pieces of code that can be loaded into the kernel at \red{runtime}, without need to recompile the kernel. New modules can be loaded only in kernel mode (CPL=0). The primary use for modules is to implement drivers for hardware devices, but they can also be used to implement new system calls, filesystems, and other kernel features. Beware Modules run in kernel mode so they have access to everything.
+
+The advantages of using kernel modules are: (1) Allowing to add functionality without rebooting, (2) Allowing for faster compile time of the kernel, (3) The kernel will use less space, (4) Allowing to add support for new hardware.
+
+
+To implement a module we use (Beware to use kernel functions and not user functions, e.g. "kprintf" instead of "printf"):
+\begin{itemize}
+  \item \code{int init\_module(void)}: The function that is called when the module is loaded into the kernel. 
+
+  \item \code{void cleanup\_module(void)}: The function that is called when the module is unloaded from the kernel.
+
+  \item \code{module\_param(name, type, perm)}: A macro to declare a module parameter. each parameter must have a default value.
+\end{itemize}
+
+
+
+\paragraph{Devices \& Drivers} Devices are represented by special files in the filesystem, which are called \textbf{device files}, which are located in \code{/dev}. To communicate with a device, we use the standard file operations (open, read, write, close) on the device file. The kernel uses \textbf{device drivers} to handle the communication with the device. Device drivers are kernel modules that implement the necessary functions to communicate with the device.
+
+\paragraph{Block vs Character Devices} Character devices are ones that can be accessed as a stream of bytes (e.g. keyboard, mouse, etc.), typically for transferring data and in a sequential matter. Block devices are ones that can be accessed only in multiples of blocks (e.g. hard drives), typically for storing data in random-access data.
+
+\paragraph{Character Devices} Each character device is represented by a \textbf{major number (1-512)} and a \textbf{minor number (0-255)}. The major number identifies the driver associated with the device, while the minor number identifies the specific device. Each major number can have multiple minor numbers, and vice versa. Both numbers are found in the \code{inode} of the device file.
+
+\vspace*{1em}
+Registering a new device is done by: (default permissions are write for owner, read for others)
+\begin{center}
+  \textbf{\code{mknod}} \code{<Name> <Type (c for character, b for block)> <Major Number> <Minor Number>}
+\end{center}
+
+
+\paragraph{Pseudo-Devices} Linux provides pseudo-character devices that are not connected to any physical hardware. All of these devices share a \blue{major number of 1}.
+
+{
+\centering
+\renewcommand{\arraystretch}{2.2} % Increase row height for readability
+\begin{tabular}{|p{5.5cm}|p{5.5cm}|l|}
+\hline
+\textbf{write()} & \textbf{read()} & \textbf{device file} \\
+\hline
+
+\multirow{2}{5.5cm}{Succeeds and does nothing (data is discarded).} 
+& Immediately returns EOF (end of file). 
+& \texttt{/dev/null} \\
+\cline{2-3}
+
+& \multirow{2}{5.5cm}{Returns a sequence of null bytes (\texttt{\char`\\0}) of the requested length.} 
+& \texttt{/dev/zero} \\
+\cline{1-1}\cline{3-3}
+
+Immediately returns ENOSPC (no space left on device). 
+& 
+& \texttt{/dev/full} \\
+\hline
+
+Contributes to the kernel's entropy pool from "noise".
+& Returns a stream of random bytes generated at runtime.
+& \begin{tabular}{@{}l@{}}
+    \texttt{/dev/random}\\ 
+    \texttt{/dev/urandom}\\ 
+    \texttt{/dev/arandom}
+  \end{tabular} \\
+\hline
+
+\end{tabular}
+}
+
+
+
+
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.8\textwidth]{fileOperations.png}
+  \caption{File struct and file operations}
+  \label{fig:fileOperations}
+\end{figure}
+
+
+\paragraph{file operations} Each file struct has a \texttt{file\_ops} field, which is a pointer to a struct that contains pointers to functions that implement the file operations for that file. These functions include:
+\begin{itemize}
+  \item \code{int (*open) (struct inode *, struct file *)}: Called when the file is opened. If open is null, it will succeed.  
+
+  \item \code{int (*release) (struct inode *, struct file *)}: Called when the \ul{last} instance of the file is closed. If release is null, it will succeed.
+
+  \item \code{int (*flush) (struct file *)}: Called when the file is closed (every time an FD is closed, not just the last one). If flush is null, it will succeed.
+
+  \item \code{ssize\_t (*read) (struct file *, char *, size\_t, loff\_t *)}: Called when the file is read. If read is null, it will return (-EINVAL).
+  
+  \item \code{ssize\_t (*write) (struct file *, const char *, size\_t, loff\_t *)}: Called when the file is written to. If write is null, it will return (-EINVAL).
+  
+  \item \code{loff\_t (*llseek) (struct file *, loff\_t, int)}: Called when the file's offset is to be changed.
+  
+  \item \code{int (*ioctl) (struct inode *, struct file *, unsigned int \textbf{cmd\_id}, unsigned long \textbf{arg})}: Allows adding additional functionality to the device. Arg is an optional parameter.
+\end{itemize}
+
+
+
+
+
+\paragraph{Drivers as Modules} Drivers can be implemented as kernel modules, where \code{init\_module()} will register the driver using \code{register\_chrdev()}. Note that registering a driver only connects it with a major number, and not to a device. Unregistering a driver is done through \code{cleanup\_module()} that uses \code{unregister\_chardev()}.
+
+
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}[b]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{module_driver.png}
+    \caption{Driver Module Flow}
+    \label{fig:driver_module_flow}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[b]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{module_file.png}
+    \caption{Module File Flow}
+    \label{fig:module_file_flow}
+  \end{subfigure}
+  \caption{Driver and Module File Flows}
+\end{figure}
+
+
+\paragraph{Registering a Driver} 
+To register a driver, we use the \code{register\_chrdev()} function, which adds the driver to the kernel's array of character drivers, \blue{\code{chrdevs[]}}, where the index is the \blue{major} number. It also adds the driver to \code{/proc/devices} file, which lists all registered drivers and their major numbers \gray{(both character \& block drivers)}, character \& block devices use different arrays thus multiples of the same number can exist. \code{chrdevs[]} is an array of driver names + pointers to their \code{file\_ops} structs.
+
+
+To allocate a major number, Linux allows 512 number options, and each driver can register itself with a major number of its choice (could cause conflicts), or could use \(0\) which then returns the first available number from 512 to 1.
+
+
+Unregistering a driver using \code{unregister\_chrdev()} will remove the driver from \code{chrdevs[]}, \red{but will not} remove the device from \code{/dev}. 
 
 
 
@@ -1744,7 +1959,7 @@ A completely different architecture, but similar concepts, used in IBM PowerPC p
 
 \paragraph{Resuming an interrupted process} We split to multiple cases:
 \begin{itemize}
-  \item \textbf{Asynchronous (external) interrupts:} Resume in the next process instruction, right after the last instruction that was exectued.
+  \item \textbf{Asynchronous (external) interrupts:} Resume in the next process instruction, right after the last instruction that was exectued. Note that asynchronous interrupts are caught and handled between instructions.
 
   \item \textbf{Synchronous (=internal) + explicit:} Likewise, resume in the next instruction.
 
@@ -1762,6 +1977,8 @@ A completely different architecture, but similar concepts, used in IBM PowerPC p
 
 \paragraph{DMA \& interrupts} DMA = Direct memory access, which is when an I/O device can directly read/write to memory without involving the CPU. Conceptually devices fire an interrupt when a DMA operation is finished, not only when reciving (reading) data, but also when sending (writing) data. This allows to notify OS when the send buffer has become free.
 
+
+\red{Note:} All interrupts are handled in \blue{kernel mode}, CPL=0, including the timer interrupt.
 
 
 
@@ -1972,10 +2189,17 @@ int my_open(char *fname) {
 For each non-symlink atom in the path, a user must be able to \ul{search} all directories leading to the file. This means that the user must have the appropriate permissions to access each directory in the path. \blue{x} bit = \textbf{search} allows the user to search for files in the directory. \blue{r} bit = allows the user to list the contents of the directory (with \code{ls} for example). \blue{w} bit = allows the user to create or delete files in the directory.
 
 
+\paragraph{FDT \& GFDT} Each process has a \textbf{File Descriptor Table (FDT)}, which is an array of file descriptors that the process has opened. The FDT is indexed by file descriptor numbers, and each entry in the FDT points to a \textbf{File Object} in the kernel, which contains information about the open file, such as the current offset, the inode, and the file operations that can be performed on it. 
 
+All opened files for every process in the system are saved in one global table, GFDT.
 
+By default, every process has the following three standard FDs: (\code{fd=0}) STDIN, the standard input channel, (\code{fd=1}) STDOUT, the standard output channel, (\code{fd=2}) STDERR, the standard error channel.
+
+\paragraph{file object} A file object is a kernel data structure that contains all the information about an open file, including its current offset, the inode it refers to, and the file operations that can be performed on it, the number of file descriptors pointing to it, the mode it was opened with, etc. 
 
 \section*{File Systems}
+
+Note: The CPU can't directly access/process data on the disk, it must reside on the DRAM.
 
 \paragraph{HDD Latency} HDD latency is \textbf{seek time} + \textbf{rotational latency}. Seek time is the time it takes for the read/write head to move to the correct track on the disk. Rotational latency is the time it takes for the disk to rotate to the correct sector. 
 

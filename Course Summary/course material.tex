@@ -22,6 +22,7 @@
 \usepackage{amsmath}
 \usepackage{multicol}
 \usepackage{multirow}
+\usepackage{tabularx}
 
 
 
@@ -496,7 +497,86 @@ Note that \blue{\textit{Global/Static Variables \& Dynamically Allocated Memory}
 \end{center}
 
 
-\paragraph{Pthreads} POSIX threads (pthreads) is a standard for multi-threading in C/C++. It provides a set of functions to create and manage threads, as well as to synchronize them. \gray{(More details in the functions reference)}
+\paragraph{Pthreads} POSIX threads (pthreads) is a standard for multi-threading in C/C++. It provides a set of functions to create and manage threads, as well as to synchronize them. 
+
+
+
+
+\noindent % Prevents indentation before the first minipage
+% --- BEGIN LEFT COLUMN (TEXT) ---
+\begin{minipage}[t]{0.48\textwidth}
+\begin{center}
+  \textbf{Common Functions}
+\end{center}
+The following are some of the most commonly used pthread functions:
+\begin{itemize}
+    \item \textbf{\code{pthread\_create(...)}}: Creates a new thread that starts executing a given function. The thread ID is stored in a pointer.
+    
+    \item \textbf{\code{pthread\_self()}}: Returns the thread ID of the calling thread. This ID is internal to the pthread library.
+
+    \item \textbf{\code{pthread\_exit(...)}}: Terminates the calling thread and makes its exit status available to any thread that joins it.
+
+    \item \textbf{\code{pthread\_cancel(...)}}: Sends a request to terminate a specified thread. The thread's exit status is set to \code{PTHREAD\_CANCELED}.
+
+    \item \textbf{\code{pthread\_join(...)}}: Blocks the calling thread until a specified thread terminates, then retrieves its exit status and frees its resources.
+\end{itemize}
+\end{minipage}
+\hfill % This creates a flexible space between the two columns
+% --- BEGIN RIGHT COLUMN (TABLE) ---
+\begin{minipage}[t]{0.5\textwidth}
+  \begin{center}
+    \textbf{Thread Termination}
+  \end{center}
+\centering % Centers the table within the minipage
+\rowcolors{2}{gray!15}{white}
+% Note: Column widths have been adjusted to fit inside the minipage
+\begin{tabular}{|>{\raggedright\arraybackslash}p{0.45\linewidth}|
+    >{\centering\arraybackslash}p{0.2\linewidth}|
+    >{\centering\arraybackslash}p{0.25\linewidth}|}
+    \hline
+    \rowcolor{blue!30}
+    \textbf{Reason for Termination} & \textbf{Thread Terminates?} & \textbf{Process Terminates?} \\
+    \hline
+    Calling \code{pthread\_exit()} & Yes & Not necessarily \\
+    Calling \code{pthread\_cancel()} & Yes & Not necessarily \\
+    Return from \code{start\_routine} & Yes & Not necessarily \\
+    \hline
+    Calling \code{exit()} & Yes & Yes \\
+    Illegal operation & Yes & Yes \\
+    Return from \code{main} & Yes & Yes \\
+    \hline
+\end{tabular}
+\end{minipage}
+
+\paragraph{Threads in Linux} In Linux, threads are implemented as *processes* with a shared memory space. Each thread has its own PCB, but they share the same memory address space, file descriptors, and other resources. Threads do not have family ties between one another.
+
+\paragraph{Thread Groups} A thread group is a collection of threads that share the same process ID (PID) and are managed by the same process. In Linux, each thread group has a unique group ID (TGID), which is the PID of the first thread in the group. The TGID is used to manage signals and other resources shared by the threads in the group.
+
+Since each thread has his own PCB and PID, to send a signal to all threads in a thread group, the signal must be sent to the TGID (the PID of the first thread in the group). Each PCB contains a field \code{thread\_group} which points to the head of the linked list of all threads in the group. 
+
+The syscall \code{getpid()} returns the \code{TGID} of the calling thread. The personal "PID" of each thread is called \code{TID} (Thread ID), which is the same as the personal "PID" of the thread's PCB. The syscall \code{gettid()} returns the TID of the calling thread.
+
+
+\paragraph{\code{clone()}} The syscall:
+\code{clone(int (*fn)(void *), void *child\_stack, int flags, void *arg);}  
+is used to create a child process that shares resources with the parent process. The parameters are:
+\begin{itemize}
+  \item \code{fn}: A pointer to the function that will be the main function of the child process.
+  \item \code{child\_stack}: A pointer to the \gray{user} stack that will be used by the child process. \gray{The highest address of the stack is passed, i.e. the top of the stack.}
+  \item \code{arg}: A pointer to the argument that will be passed to the function \code{fn}.
+  \item \code{flags}: A bitmask that specifies which resources will be shared between the parent and child processes. The flags can include:
+  \begin{itemize}
+    \item \code{CLONE\_VM}: Share the same memory address space.
+    \item \code{CLONE\_FS}: Share the same filesystem information (e.g., current working directory).
+    \item \code{CLONE\_FILES}: Share the same file descriptor table.
+    \item \code{CLONE\_PARENT}: Share the same parent process as the parent of the calling thread.
+    \item \code{CLONE\_THREAD}: Create a new thread in the same thread group.
+  \end{itemize}
+\end{itemize}
+The return value is the TID of the child.
+
+
+
 
 
 
@@ -973,7 +1053,7 @@ Detailed explanation about alternative slots and slot unification:
 i.e. RR at best is as good as SJF, and at worst is \(2X\) slower.
 
 
-\paragraph{Shortest Remaining Time First (SRTF)} If we remove the assumption that all jobs arrive together, then SJF is not optimal anymore, as it may cause a convoy effect. \textbf{SRTF} is a preemptive version of SJF, where the scheduler always runs the job with the shortest remaining time. i.e. when a new job arrives or an old one finishes, the scheduler runs the job with the shortest remaining time, even if it means preempting the currently running job. This is optimal in terms of average wait time, but it can cause starvation for long jobs.
+\paragraph{Shortest Remaining Time First (SRTF)} If we remove the assumption that all jobs arrive together, then SJF is not optimal anymore, as it may cause a convoy effect. \textbf{SRTF} is a preemptive version of SJF, where the scheduler always runs the job with the shortest remaining time. i.e. when a new job arrives or an old one finishes, the scheduler runs the job with the shortest remaining time, even if it means preempting the currently running job. This is \ul{optimal} in terms of average response time, but it can cause starvation for long jobs.
 
 
 \paragraph{Selfish RR} Selfish RR is a variant of RR where only "old enough" processes are running in the run-queue. i.e.
@@ -1012,8 +1092,8 @@ All of the definitions below are relative only to the Linux \(\leq\) 2.4 schedul
 \begin{itemize}
   \item \textbf{"Realtime"} Policies:
         \begin{enumerate}
-          \item \code{SCHED\_RR} (round-robin)
-          \item \code{SCHED\_FIFO} (first-in, first-out)
+          \item \code{SCHED\_RR} (round-robin): The time slice is calculated as \((100 * HZ)/ 1000\) \gray{HZ = number of times interrupts per second}.
+          \item \code{SCHED\_FIFO} (first-in, first-out): doesn't give up the CPU unless: (1) voluntarily using \code{sched\_yeild()}, (2) I/O operation, (3) preempted by a higher priority task.
         \end{enumerate}
   \item The default policy:
         \begin{enumerate}
@@ -1023,7 +1103,9 @@ All of the definitions below are relative only to the Linux \(\leq\) 2.4 schedul
 \end{itemize}
 POSIX defines the meaning of \code{SCHED\_OTHER} (aka \code{SCHED\_NORMAL} in Linux) is decided by the OS. Typically employs some multi-level priority queue with the negative feedback loop.
 
-\textit{Realtime} tasks are \blue{always favored} by the scheduler. Only an admin can set a task to run with a \textit{realtime} policy, the users can set a policy using the \code{sched\_setscheduler} syscall.
+\vspace*{1em}
+
+\textit{Realtime} tasks are \blue{always favored} by the scheduler. Only an \ul{admin} can set a task to run with a \textit{realtime} policy, the users can set a policy using the \code{sched\_setscheduler} syscall. The multi-level priority queue is leveled from 0-99: \ul{In kernel} - 0 is the highest, \ul{In user} - 99 is the highest (e.g. syscalls), as kernel calculates (99-input).
 
 
 
@@ -1111,6 +1193,186 @@ The scheduler is implemented in the \code{kernel/sched.c} file, and the task str
 \paragraph{The Drawback} The scheduler is a linear scheduler, i.e. it runs in \(O(n)\) time. It was replaced by the "\(O(1)\)" scheduler which then was replaced by the "\textit{Completely Fair Scheduler}" (CFS) which is \(O(\log n)\).
 
 
+
+
+
+
+
+\section*{CFS (Completely Fair Scheduler)}
+
+\paragraph{CFS} The CFS is a preemptive, priority-based scheduler that aims to provide a fair distribution of CPU time among all tasks while maintaining efficiency and scalability (\(O(\log N)\)).
+
+
+\paragraph{\code{vruntime} - Virtual Run Time} Every running task obtains virtual run-time. Ideally all tasks maintain an equal amount of virtual run time, and that's the goal. The algorithm stores the minimum \& maximum virtual run times at all times. The minimal virtual runtime task is always the next task to run.
+
+
+\paragraph{\code{sched\_latency}} The CFS uses a \textit{sched\_latency} parameter to determine the length of an epoch (48 ms). Each task gets a quantum of \(Q_i=\text{sched\_latency}/N\), where N is the number of tasks.
+
+
+The algorithm also defines a minimum quantum length, \code{sched\_min\_granularity}, which is the smallest time slice a task can receive (6 ms). So in practice, tasks can have a longer epoch than defined by \code{sched\_latency}.
+
+
+\paragraph{CFS Algorithm} The CFS uses a red-black tree (similar to AVL tree) to maintain the tasks in the system, ordered by their \code{vruntime}. New tasks are inserted into the tree, with their \code{vruntime} set to the \red{\code{max\_vruntime}}. Tasks that come back from I/O operations or are woken up have their \code{vruntime} set to the \red{\code{min\_vruntime}}. 
+
+
+\paragraph{CFS Priorities \& Weights} The CFS uses a priority system based on the \textit{nice} value of the task. The \code{vruntime} is adjusted based on the task's priority, with higher priority tasks gaining lower \code{vruntime}. The \blue{lower} the nice the \blue{higher} the priority, and for each nice value, there is a corresponding weight (high weight for high priority)
+
+Let \(W_0\) be the weight of nice=0, then:
+\[
+{VR}_i = \frac{W_0}{W_i} \cdot \Delta T
+\]
+\[
+Q_i = \frac{W_i}{\sum_k W_k} \cdot \text{sched\_latency}
+\]
+
+
+
+
+
+
+
+
+% =====================================================
+% ================= Context Switch ====================
+% =====================================================
+
+
+\Topic{Context Switch}
+
+
+\begin{tabularx}{\textwidth}{|X|X|}
+\hline
+\multicolumn{1}{|c|}{\textbf{Caller Rules}} & \multicolumn{1}{c|}{\textbf{Callee Rules}} \\
+\hline
+ & \\
+\textbf{Before the function call:} & \textbf{On function entry:} \\
+\begin{itemize}
+    \item Save caller-saved registers on the stack (\texttt{rax, rcx, rdx, rdi, rsi, r8–r11}).
+    \item Pass the first 6 arguments in registers (from left to right: \texttt{rdi, rsi, rdx, rcx, r8, r9}).
+    \item Pass the rest of the arguments (beyond the first six) on the stack.
+    \item Use the \texttt{call} machine instruction.
+\end{itemize}
+&
+\begin{itemize}
+    \item Create a new stack frame (save the old \texttt{rbp} and point to the new top of the stack).
+    \item Allocate space for local variables.
+    \item Save callee-saved registers on the stack (\texttt{rbx, r12–r15}).
+\end{itemize}
+\\
+\textbf{Upon return from the function:} & \textbf{On function exit:} \\
+\begin{itemize}
+    \item Restore the saved registers.
+\end{itemize}
+&
+\begin{itemize}
+    \item Place the return value in the \texttt{rax} register.
+    \item Restore the saved registers.
+    \item Deallocate local variables.
+    \item Return to the old stack frame (restore the previously saved \texttt{rbp}).
+    \item Use the \texttt{ret} machine instruction.
+\end{itemize}
+\\
+\hline
+\end{tabularx}
+
+{\centering Two types of context switches:}
+
+\begin{tabularx}{\textwidth}{|X|X|}
+\hline
+\multicolumn{1}{|c|}{\textbf{Forced Context Switch (Preemption)}} & \multicolumn{1}{c|}{\textbf{Initiated Context Switch}} \\
+\hline
+ & \\
+The kernel preempts (i.e., forcibly takes) the CPU from the process, for example, following: & The process voluntarily gives up the CPU, for example, by means of: \\
+\begin{itemize}
+    \item A timer interrupt (\texttt{scheduler\_tick}) which reveals that the time slice allocated to the current process has expired.
+    \item An asynchronous event that wakes up a process with a higher priority than the currently running process. \gray{For example: a disk interrupt or the release of a lock for which a process was waiting.}
+\end{itemize}
+&
+\begin{itemize}
+    \item A blocking system call (such as \texttt{wait()}, \texttt{read()}, ...), which puts the process into a waiting state.
+    \item The \texttt{exit()} system call, which terminates the process.
+    \item The \texttt{sched\_yield()} system call -- a dedicated system call to yield the CPU.
+\end{itemize}
+\\
+\hline
+\end{tabularx}
+
+
+
+\paragraph{Preemption in Kernel} The \gray{(new)} linux kernel is preemptive, meaning that a process running in the kernel can be preempted!
+
+
+When switching context we switch the kernel stacks of the tasks (each task has a corresponding kernel stack in the kernel space).
+
+The only gateway in linux for context switches is the function \code{schedule()}, which \red{can not} be interrupted.
+
+
+\paragraph{Context Switch Saving} when a context switch occurs we save:
+\begin{itemize}
+  \item The stack, heap, code (memory regions) are in the memory space of the process, so they do not need to be backed up.
+
+  \item open files and other data are already residing in the PCB, which is in the memory.
+
+  \item Registers \& flags (the CPU state) are backed up to the kernel stack of the thread on a field called \blue{thread\_struct}.
+
+  \item The base of the kernel stack base is pointed to by \blue{TSS.sp0} (the top of the kernel stack) so it needs to be backed up.
+\end{itemize}
+
+\paragraph{TSS (Task State Segment)} is a unique data structure for each CPU core that contains the state of the currently running task. It is pointed to by \blue{TR}, and it contains the \blue{TSS.sp0} field which points to the top of the kernel stack of the currently running task. 
+
+Each PCB contains a \code{thread\_struct} field which contains the state of the task, including the CPU registers, flags, and most importantly, the head of the kernel stack.
+
+
+To do a context switch we do the following steps:
+\begin{enumerate}
+  \item \textbf{\code{context\_switch()}}: This function calls for switching the memory space, and calls the next function -
+
+  \item \textbf{\code{\_\_switch\_to\_asm()}}: The macro that saves the current context and loads the next one. More specifically, it backs the registers \& the rsp of the kernel and loads the new one, pops the backed registers (of the new one) and then calls the next function -
+
+  \item \textbf{\_\_switch\_to()}: This function updates the TSS.sp0 field to point to the new kernel stack, and returns to return address of \code{\_\_switch\_to\_asm()} or \code{ret\_from\_fork()}.
+\end{enumerate}
+
+\paragraph{\code{do\_fork()}} is the kernel function used by \code{fork()} and \code{clone()} to create the new context of the new thread:
+\begin{enumerate}
+  \item It allocates a new PCB for the new thread, and a new kernel stack
+  \item Calls for \code{copy\_thread()}, which fills the kernel stack of the child process to be as it was the one who called \code{fork()} and then \code{\_\_switch\_to\_asm()}
+  \item Copies to the child process most of the PCB fields and data from the father.
+  \item Connects the child process to its family connections.
+  \item Adds the child process to the global process list. \gray{and to the pid hash table}
+  \item Transfers the child task to \code{TASK\_RUNNING} state and adds it to the \code{runqueue}.
+  \item The functions returns the pid of the child, and this value is returned from the father too.
+\end{enumerate}
+
+\code{copy\_thread()} copies the registers from the parent to the child, sets the \code{rax} register of the child to 0, and updates the return address that is saved on the stack to the \code{ret\_from\_fork()} function, and finally sets the task kernel stack head (rsp) to the new kernel stack of the child process.
+
+\code{ret\_from\_fork()} is the function that pops the registers from the kernel stackand returns to the user code (using \code{sysret})
+
+
+\paragraph{\code{do\_exit()}} is the function that is called when a process exits (either by calling \code{exit()} or by signals/interrupts). It does the following:
+\begin{enumerate}
+  \item Frees the resources of the task, closes all open files, frees memory, etc.
+  \item Sets the exit value to the \code{exit\_code} field of the PCB.
+  \item Updates family ties: all children become orphans (children of init), the parent keeps the pointer to the exiting child, all siblings lose their pointer to the exiting process.
+  \item Updates the task state to \code{TASK\_ZOMBIE}
+  \item Calls the function \code{schedule()} to run a different task. The task runtime is finished by \code{\_\_switch\_to\_asm()}.
+\end{enumerate}
+
+
+
+
+
+
+
+
+
+% =====================================================
+% ======== Lecture Synchronization ====================
+% =====================================================
+
+
+
+
+
 \newpage
 \Topic{Synchoronization (\& Deadlocks)}
 
@@ -1125,7 +1387,9 @@ Cache \textbf{coherency} relates to a \textbf{single} memory location, while cac
 To enforce ordering for memory consistency, explicit \textbf{memory fence} (memory barrier) must be used. The fence makes all store-s that happened before the fence visible to all load-s after the fence, notably, flushes the store buffer to teh memory system.
 
 
-\paragraph{Atomicy} In programming, atomicity means an operation, or a series of operations, appears to happen all at once, without any interruption from other processes. This ensures that either the entire operation completes successfully, or it has no effect at all, preventing partial or incomplete results.
+\paragraph{Atomicy} In programming, atomicity means an operation, or a series of operations, appears to happen all at once, without any interruption from other processes. This ensures that either the entire operation completes successfully, or it has no effect at all, preventing partial or incomplete results. 
+
+In \ul{single core} CPUs each instruction is atomic, i.e. it can't be interrupted by another instruction. In \ul{multi-core} CPUs, atomicity is only achieved by using special instructions or locks that ensure no other thread can access the data while the operation is being performed. (e.g. \code{lock; instruction})
 
 
 \paragraph{Critical Section} A group of operations we need to atomically execute is called a \textbf{critical section}. Atomicity will make sure other threads don't see partial results! The critical section can be a uniform code across all threads, or it can be a different.
@@ -1185,6 +1449,15 @@ void release(struct spinlock *lock) {
 \end{enumerate}
 
 
+
+
+
+
+
+\section*{Mutex Lock}
+
+
+
 \paragraph{Spinning or Blocking} A lock can be implemented using either \textbf{spinning} or \textbf{blocking}:
 \begin{itemize}
   \item \textbf{Spin (busy wait)} - The thread repeatedly checks if the lock is available, consuming CPU cycles while waiting. This is suitable for short critical sections where the wait time is expected to be very short. Note that the user \red{can not} block context switches.
@@ -1195,6 +1468,37 @@ Rule of thumb: If the critical section is shorter than the time a context switch
 Unlike spinning which can be done by the user, going to sleeping is done by a request to the OS (since it involves changing process states).
 
 
+\paragraph{Mutex interface} the following are the common ops:
+\begin{itemize}
+  \item \code{mutex\_init(mutex\_t *mutex, const mutex\_attr\_t *att)}: Initializes the mutex object. The \code{att} parameter can be used to set attributes.
+
+  \item \code{mutex\_lock(mutex\_t *mutex)}: Acquires the mutex lock. If the lock is already held by another thread, the calling thread will block until the lock is available.
+
+  \item \code{mutex\_trylock(mutex\_t *mutex)}: Attempts to acquire the mutex lock without blocking. If the lock is available, it acquires it and succeeds. Otherwise if the lock is already held by another thread, it fails and continues.
+
+  \item \code{mutex\_unlock(mutex\_t *mutex)}: Releases the mutex lock. If there are threads waiting for the lock, one of them will be woken up.
+
+  \item \code{mutex\_destroy(mutex\_t *mutex)}: Destroys the mutex object and releases any resources associated with it. The mutex must not be locked when this function is called, otherwise it fails.
+\end{itemize}
+
+\paragraph{Undefined Actions} In a correct implementation of a mutex, only the thread that holds the lock can call \code{mutex\_unlock()}. The following are undefined behaviors:
+\begin{itemize}
+  \item re-locking the mutex by the same thread that holds it.
+  \item unlocking the mutex by a thread that does not hold it.
+  \item unlocking a mutex that is not locked.
+\end{itemize}
+
+
+
+\paragraph{Condition Variables} A condition variable is a synchronization primitive that allows threads to wait for certain conditions to be met, while inside a critical code section without the need to block the CPU!
+A condition variable is always associated with a mutex, and it allows threads to wait for a condition to be signaled by another thread. The typical usage pattern is as follows:
+\begin{itemize}
+  \item A thread acquires the mutex lock.
+  \item The thread checks the condition. If the condition is not met, it calls \blue{\code{cond\_wait(cond\_var, mutex)}} to release the mutex (it must be held by the thread beforehand) and block until another thread signals the condition variable.
+  \item When the condition is met, another thread can call \blue{\code{cond\_signal(cond\_var)}} to wake up one waiting thread or \blue{\code{cond\_broadcast(cond\_var)}} to wake up all waiting threads.
+  \item The waiting thread must re-acquire the mutex lock before continuing execution. (part of the \code{cond\_wait()} operation)
+  \item The thread should then check the condition again and proceed if it is met.
+\end{itemize}
 
 \section*{Semaphores}
 

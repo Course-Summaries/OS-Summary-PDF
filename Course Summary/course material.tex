@@ -2108,6 +2108,9 @@ DHCP is an \red{L5 protocol} used to dynamically assign IP addresses to devices 
 \end{itemize}
 
 
+\paragraph{Fragmentation} Virtual memory also solves the problems of fragmentation: (1) External fragmentation - wasting external chunks of data due to lack of contiguity, caused by spreaded allocations and deallocations, (2) Internal fragmentation - wasting internal chunks of data within allocated pages, due to allocating too much memory for a process, which is not used.
+
+
 \paragraph{Terminology} \textbf{Virtual Address (VA)} is the address used by a process (\& programmer) to access its own memory space, the CPU processes VAs. \textbf{Physical Address (PA)} is the actual address in RAM where data is stored. \textbf{Page} = chunk of contiguous data (in virutal or physical space), \textbf{Frame} = physical memory exactly big enough to hold one page. \blue{\(|\text{Page}|=|\text{Frame}|=2^k\)}, typically \blue{4KB (k=12)}.
 
 
@@ -2154,12 +2157,14 @@ If access type is incompatible with specified access rights, then a protection v
   \item \textbf{OS regains control}, realizes page is on drive, initiates I/O read ops
   \item \textbf{OS suspends the process} \& context switches to another process
   \item \textbf{Upon read completion}, OS makes the process runnable again
-  \item When the \textbf{process is scheduled} again, it re-executes the faulting instruction (which will succeed this time)
+  \item When the \textbf{process is scheduled} again, it \ul{re-executes the faulting instruction (which will succeed this time)}
 \end{enumerate}
 
 
 \paragraph{Minor Page Fault} Minor = NO need to go to drive to resolve.
 Examples: (1) \textbf{CoW (Copy on Write)} which is used to implement fork for example, (2) \textbf{Demand-based (Lazy) memory allocation}, (3) reading a file content that already is found in the \textbf{page cache}, possibly by other processes.
+
+Note: Minor page faults may cause access to disk if there is not enough memory on DRAM (will cause swapping).
 
 \paragraph{Page in \& out} a chunk of data: \textbf{Paging} is the process of swapping pages in and out of physical memory to disk storage.
 $$
@@ -2179,28 +2184,26 @@ $$
 We also divide the \code{mmap} pages into two types: (1) \textbf{MAP\_SHARED} = changes affect the actual file (\& visible to other processes), (2) \textbf{MAP\_PRIVATE} = changes don't affect the actual fiile; rather, there will be a CoW for the process (other processes will not see changes)
 
 \paragraph{Swapping} \textbf{Swap Space} is a disk area where \red{anonymous} pages are written, if the OS decided they have no room in DRAM (memory is full). Pages are said to be "swapped out" when this occurs (and "swapped in" on return). Nowadays we don't distinguish between the terms swapping and paging.
+  
 
+\textit{NOTE:} Kernel memory \red{never swaps out}, it is always in DRAM, and it is not paged in/out. 
+
+Exceptions (for page faults) are divided to: (1) illegal access rights, (2) user access to kernel memory, (3) access to address that is not mapped to any page. The kernel decides the exception using bits for each one and the CPU loads the virtual address to register CR2 (not to be confused with CR3).
 
 \paragraph{On-demand Paging} A memory management technique where pages are loaded into memory only when they are needed, rather than preloading all pages at once. i.e. pages are allocated/brought into DRAM only when the process attempts to access it for the first time (resulting in a page fault)
 
+The steps are: (1) Update the memory region list, (2) Set the page table entry (PTE) present bit as 0, (3) The page is allocated/copies from disk upon first access.
+
 \paragraph{Readahead Prefetching} When \code{read()} identifies sequential accesses to file, the \code{read()} reads ahead pages not yet requested, prefetching them, so they would be ready, in an attempt to minimize page faults. (same with the on-demand paging page fault handler)
+
+
+\paragraph{Deduplication} A technique to save on physical memory by allocating a single shared page for all processes who use the same data as \textit{read only}.
+
 
 
 \paragraph{TLB (Translation Lookaside Buffer)} The TLB is a cache used by the CPU to reduce the time taken to access memory locations. It stores recent translations of virtual memory addresses to physical memory addresses, allowing the CPU to quickly find the physical address corresponding to a virtual address without having to go through the entire page table. When a virtual address is accessed, the CPU first checks the TLB; if the translation is found (a TLB hit), the physical address is retrieved quickly. If not (a TLB miss), the CPU must consult the page table, which is slower. TLBs are typically small and fast, and they use various replacement policies to manage the limited space. 
 
 Typically, HW fills TLB automatically by reading the page table on its own (without SW help), and OS invalidates TLB entries (upon context switches, for non-global entries).
-
-
-\paragraph{Page Replacement Algorithms} using an intelligent page replacement policy helps with virtual memory performance:
-\begin{itemize}
-  \item \textbf{Belady - Optimal} - (theoretical) Replace the page that will not be used for the longest period of time in the future. 
-
-  \item \textbf{LRU (least recently used)} - (impractical) Replace the page that has not been used for the longest period of time in the past. 
-
-  \item \textbf{Clock} - (practical LRU) A circular list of pages in memory, where each page has a reference bit. When a page is accessed, its reference bit is set to 1. When a page needs to be replaced, the algorithm checks the pages in a circular manner, clearing the reference bit of each page until it finds a page with a reference bit of 0, which is then replaced.
-
-  \item \textbf{NRU (not recently used)} - (practical more sophisticated LRU) Keep to bits for each page, dirty \& referenced, and periodically turn off referenced (as in clock). Replace victim page with the lowest class from the following: (class 0) not referenced, not dirty, (class 1) not referenced, dirty, (class 2) referenced, not dirty, (class 4) referenced, dirty. Can enhance further by keeping a counter (\code{active}) and incrementing periodically for pages that are referenced, and decrementing periodically. Instead of referenced we will split to active and not active (two lists) by a threshold. 
-\end{itemize}
 
 
 
@@ -2217,7 +2220,7 @@ Typically, HW fills TLB automatically by reading the page table on its own (with
 
 \vspace*{0.5em} 
 
-The job of the x86 virtual memory subsystem is to translate 20-bits (=virtual page number - VPN) to 20-bits (= physical frame - PFN). Every process holds a \textbf{Page Directory} (= 4KB page) holding 1024 PDEs (page directory entries) each containing a pointer to a \textbf{Page Table} (= 4KB page) holding 1024 PTEs (page table entries) each containing a point to a \textbf{Page Frame} (= 4KB page). The offset is the last 12 bits of the virtual address, which is used (as is) to access the data in the page frame (same offset).
+The job of the x86 virtual memory subsystem is to translate 20-bits (=virtual page number - VPN) to 20-bits (= physical frame - PFN). Every process holds a \textbf{Page Directory} (= 4KB page) holding 1024 PDEs (page directory entries) each containing a pointer to a \textbf{Page Table} (= 4KB page) holding 1024 PTEs (page table entries) each containing a point to a \textbf{Page Frame} (= 4KB page). The offset is the last 12 bits of the virtual address, which is used (as is) to access the data in the page frame (same offset). This structure is called \blue{Radix Trees}.
 
 \vspace*{0.5em} 
 
@@ -2306,6 +2309,165 @@ A completely different architecture, but similar concepts, used in IBM PowerPC p
 
 
 
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.4\textwidth]{PPC-Caches.png}
+\caption{PPC Virtual Memory Architecture}
+\label{fig:PPC-virtual-memory}
+\end{figure}
+
+
+
+
+
+
+
+
+
+
+
+
+
+\section*{Linux Implementation (OS)}
+
+
+\paragraph{Memory Descriptor} The memory descriptor \blue{(\code{mm\_struct})} is a data structure used by the Linux kernel to manage a process's memory. It contains information about the process's virtual memory layout, including the location and size of each memory region. \ul{Threads share} the same memory descriptor, while processes have their own memory descriptor.  
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\textwidth]{memory_struct.png}
+\caption{Memory Descriptor Structure in Linux}
+\label{fig:memory-descriptor}
+\end{figure}
+
+
+\paragraph{Kernel Threads} are threads created by the operating system to execute specific tasks in the kernel space. E.g \code{kswapd} thread is responsible for managing memory by swapping pages in and out of physical memory. Kernel threads \red{do not have their own memory descriptor}, they point to \red{NULL}, so they keep the memory descriptor of the last process that was running (in CR3).
+
+\blue{Every} kernel thread has his \blue{own kernel stack} in the kernel space, thus it does not need a memory descriptor of its own. They use the page tables of the last process, since \ul{kernel space exists (the same) in all user spaces}.
+
+
+\paragraph{Kernel vs User Space} In x64-bit intel we use 48-bit virtual memory (256TB) and 52-bit physical memory (4PB). The kernel space is the upper half of the virtual address space, while the user space is the lower half. The kernel space is reserved for the operating system and its kernel threads, while the user space is reserved for user processes. The kernel space is not accessible by user processes, and vice versa. The kernel space is shared by all processes thus ensuring it can be accesses at any point from the kernel, using the page tables of the user process.
+
+
+
+
+
+
+
+\paragraph{Memory Descriptor Fields} The memory descriptor contains several fields, including:
+\begin{itemize}
+  \item \textbf{\code{mm\_users}} - The number of \textit{*user*} processes that share this memory descriptor. 
+
+  \item \textbf{\code{mm\_count}} - The number of \textit{*kernel*} threads + (all user process counter together as 1, if exist) that share this memory descriptor.
+
+  \begin{itemize}
+    \item If \code{mm\_users==0} then the OS frees all memory regions of the user (stack, heap, etc)
+
+    \item If \code{mm\_count==0} then the OS frees the memory descriptor, and the page tables.
+  \end{itemize}
+
+  \item \textbf{\code{mmlist}} - Pointer (of type \code{list\_head}) to the global list of all memory descriptors.
+
+  \item \textbf{\code{pgd}} - The root addresss of the page tables, the value loaded to CR3.
+
+  \item \textbf{\code{mmap}} - Sorted linked list of the memory regions used (fig. \ref{fig:memory-descriptor}). 
+
+  \item \textbf{\code{rss}} - The number of frames \textit{in use} by the process in the DRAM.
+
+  \item \textbf{\code{total\_vm}} - The total number of virtual pages allocated by the process, including those that are not in DRAM (e.g. not allocated yet, or swapped out).
+\end{itemize}
+
+
+
+\paragraph{Memory Regions} The memory descriptor contains a linked list of memory regions, each represented by a \code{vm\_area\_struct} structure. Memory regions structs contain the following fields:
+\begin{enumerate}
+  \item \textbf{\code{vm\_start}} -  The starting virtual address of the memory region.
+  
+  \item \textbf{\code{vm\_end}} - The ending virtual address + 1 of the memory region.
+
+  \item \textbf{\code{vm\_next}} - Pointer to the next memory region in the linked list.
+
+  \item \textbf{\code{vm\_mm}} - Pointer back to the memory descriptor that this region belongs to.
+
+  \item \textbf{\code{vm\_flags}} - Flags that describe the memory region, such as:
+  \begin{itemize}
+    \item VM\_READ, VM\_WRITE, VM\_EXEC - Access rights for the region (read, write, execute).
+
+    \item VM\_MAYREAD, VM\_MAYWRITE, VM\_MAYEXEC - Upper values of the access rights, indicating whether the region can have these rights or not (can their access rights be set or not).
+
+    \item VM\_SHARED - Indicates that the memory region is shared between processes 
+
+    \item VM\_LOCKED - Prevents swapping out the memory region, ensuring it remains in physical memory.
+  \end{itemize}
+
+  \item \textbf{\code{vm\_page\_prot}} - The bit values to be set in all PTEs of this region.
+\end{enumerate}
+
+
+
+
+
+\begin{samepage}
+\begin{center}
+    
+    % Define a custom column type for the content cells to ensure text wraps
+    % and has consistent formatting.
+    \newcolumntype{L}{>{\raggedright\arraybackslash}p{6.5cm}}
+    
+    % Set the row spacing to make the table less cramped
+    \renewcommand{\arraystretch}{2.5}
+    
+    % Start alternating row colors from the first data row (the second row overall)
+    \rowcolors{2}{gray!15}{white}
+    
+    \begin{tabular}{| l | L | L |}
+        \hline
+        % --- Header Row ---
+        % This row is colored manually to override the \rowcolors command
+        \rowcolor{blue!50}
+        \multicolumn{1}{|c|}{\textcolor{white}{}} & 
+        \multicolumn{1}{c|}{\textcolor{white}{\textbf{Anonymous}}} & 
+        \multicolumn{1}{c|}{\textcolor{white}{\textbf{Named (File-Backed)}}} \\
+        \hline
+
+        % --- Row 1: Private ---
+        \blue{\textbf{Private}} & 
+        Not backed by any file + Exclusive to a single process.
+        \newline\newline\textbf{Use Case:} A process's heap (\texttt{malloc}) and stack. On \texttt{fork()}, these pages are handled with Copy-on-Write (CoW).
+        & 
+        The page is initialized with data from a file, but modifications are private to the process and are not written back to the original file (Copy-on-Write).
+        \newline\newline\textbf{Use Case:} Loading a file into memory using \texttt{mmap} with \texttt{MAP\_PRIVATE}.
+        \\
+        \hline
+
+        % --- Row 2: Shared ---
+        \blue{\textbf{Shared}} &
+        Shared between multiple processes but not associated with any file on the filesystem. All processes see the same physical page of memory.
+        \newline\newline\textbf{Use Case:} Inter-Process Communication (IPC) where processes need a fast shared memory segment without needing a temporary file, E.g \textit{pipes}.
+        &
+        The page is initialized with data from a file, and it is shared among multiple processes. Any modifications are visible to all processes and are written back to the underlying file.
+        \newline\newline\textbf{Use Case:} Created with \texttt{mmap} with \texttt{MAP\_SHARED}. The disk updates every few seconds, in batches, to avoid performance issues, or using \texttt{fsync(fd)} to force immediate write.
+        \\
+        \hline
+    \end{tabular}
+    \textbf{Classification of Memory Pages}
+\end{center}
+\end{samepage}
+
+
+Note: Heap + Stack pages are always \textit{anonymous} pages, and they are always \textit{private} to the process. Code (text) region is always \textit{named} (file-backed) and \textit{shared} between processes.
+
+
+Note 2: \code{execv()} replaces the current process's memory with a new program, effectively replacing all \code{vm\_area\_struct}s in the memory descriptor with new ones.
+
+
+\paragraph{More on CoW (Copy on Write)} 
+When a process forks, the OS creates a new memory descriptor for the child process, and new page tables. For each memory region, the OS copies the \code{vm\_area\_struct} of the parent to the child process, then copies the PTE from the parent to the child. For each frame used by the parent process (\ul{that is private + writable}), the OS adds the counter of threads using the frame and unsets the write access for this page from everyone.
+
+Upon write access we hit a page fault, if the \code{vm\_area\_struct} allows writing (\code{VM\_WRITE} is on), then the OS copies the frame to a new one to allow writing (if this was the last thread then it doesn't copy as there is no need, it just sets the write access on).
+
+Note: CoW doesn't always improve performance, as if we copy all of the memory page by page, it would have been more efficient to copy it all at once.
 
 
 
@@ -2563,6 +2725,156 @@ To disable an interrupt we set the flag \blue{\code{IF}} in the \code{RFLAGS} re
 
 
 
+
+
+
+
+% =====================================================
+% ==================== Page Cache =====================
+% =====================================================
+
+
+
+\newpage
+\Topic{Page Cache}
+
+\paragraph{Page Cache} The page cache is a memory area used by the operating system to cache disk pages in RAM. It is used to speed up disk I/O operations by keeping frequently accessed pages in memory, reducing the need to read from or write to the disk. The page cache is managed by the operating system and is transparent to user processes.
+
+
+Every I/O operation on the disk is done via the page cache; If the page is already on the page cache (in DRAM) (either from the process, or a different process) then it will use said page, else it will obtain the page from the disk and place it in the page cache.
+
+
+\paragraph{Write-Back} write ops to the disk are delayed and done in batches. This allows for minimising the number of disk access ops, but at the cost of validicy since data on the disk is not correct at all times.
+
+
+\paragraph{Read-Ahead} If the kernel recognizes a sequential pattern of accesses to the file, it will preemptively read the next few pages into the page cache. This allows for less page-faults, but might waste memory on wrong predections.
+
+
+
+\paragraph{Frame Table} The frame table is a data structure used by the operating system to manage physical memory pages. It keeps track of which physical pages are in use, which are free, and their associated metadata. Each entry in the frame table corresponds to a physical page frame in memory and contains information as follows:
+\begin{itemize}
+  \item \textbf{\code{refcount}} - How many memory spaces point to this frame.
+
+  \item \textbf{\code{mapping}} - Pointer to the inode this frame belongs to, NULL in case of anonymous frame.
+
+  \item \textbf{\code{index}} - The offset in the file this frame corresponds to, empty in case of anonymous frame.
+
+  \item \textbf{\code{flags}} - Flags that describe the frame, such as: PG\_dirty, PG\_active, PG\_referenced.
+
+  \item \textbf{\code{next\_hash}, \code{prev\_hash}} - Pointers to the next/previous frames in the page hash table (explained next).
+\end{itemize}
+
+
+
+\paragraph{Page Hash Table} The page hash table is a data structure used by the operating system to manage the mapping (\code{mapping} + \code{index}) to frames in the DRAM. All conflicting hashes are connected using chain-hashing, with the pointers \code{next\_hash},\code{prev\_hash} from the frame table.
+
+
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.7\textwidth]{Frame-Table.png}
+\caption{Frame Table + Page Hash Table; Note: that both structures are implementted in software, not in hardware}
+\label{fig:frame-table}
+\end{figure}
+
+
+
+
+
+
+\paragraph{mmap vs read/write} \texttt{mmap} and traditional \texttt{read/write} operations are two different methods for performing file I/O.
+
+\begin{itemize}
+    \item \textbf{read/write System Calls}:
+    \begin{itemize}
+        \item The system call brings data from the disk into the page cache.
+        \item It then copies the relevant data from the page cache to the user's buffer.
+    \end{itemize}
+
+    \item \textbf{mmap System Call (File Mapping)}:
+    \begin{itemize}
+        \item The system call creates a new memory region but does not read data from the disk at that time.
+        \item It uses lazy/deferred memory management.
+        \item An attempt to access the mapped memory region will cause a page fault. This fault prompts the system to read the data from the disk into the page cache and then updates the page table to point directly to the frames within that page cache.
+    \end{itemize}
+\end{itemize}
+
+
+\paragraph{PFRA (Page Frame Reclaim Algorithm)} The PFRA is a mechanism used by the operating system to manage the page cache and reclaim memory when needed:
+\begin{itemize}
+  \item Page cache pages (named pages): If the page is dirty (modified), it is written back to the disk before being reclaimed. If it is clean, it is simply removed from the page cache.
+  \item Anonymous pages: These pages are not backed by any file and therefore must be backed to the swap area before removing them, whether dirty or clean.
+\end{itemize}
+
+
+\red{Note:} PFRA only reclaims (frees) \ul{user} pages, and \ul{never kernel} pages.
+
+Note 2: Multiple swap areas can exist, improving performance by parallelizing the swap operations. 
+
+Note 3: As mentioned earlier, the swap area is the only area in the disk that is partitioned to slots of 4KB isntead of blocks of 512B.
+
+
+\paragraph{When to Swap?} PFRA runs according to the amount of the free pages in the memory based on:
+\begin{itemize}
+  \item if \(free\_pages > pages\_high\): Stop running PFRA. Reason: To not free too many pages and hurt performance.
+
+  \item if \(free\_pages < pages\_low\): Start running PFRA in background asynchronously (\blue{\texttt{kswapd} thread}). Reason: To lower the time of new allocation requests (making available space in advance)
+
+  \item if \(free\_pages < pages\_min\): Start running PFRA synchronously, in foreground, blocking processes that try to allocate memory until enough pages are reclaimed. Reason: PFRA requires memory to run, if the number of free pages is below a certain threshold, the kernel might crash.
+\end{itemize}
+
+
+
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{PFRA.png}
+  \caption{PFRA swap limits}
+  \label{fig:PFRA}
+\end{figure}
+
+
+
+\paragraph{PFRA Rules} The PFRA uses the following rules to decide which pages to reclaim:
+\begin{enumerate}
+  \item Prefer freeing \textit{page cache pages} that are not in use by any process (i.e., pages with a \code{refcount} of 0) or/and clean pages (not dirty).
+
+  \item Dynamically follow the level of activity of the pages, and prefer freeing "cold" pages (i.e., pages that have not been accessed recently).
+
+  \item Freeing shared frames must be done atomically at once from all processes that share the frame.
+\end{enumerate}
+
+Note: Anonymous pages can't be "not pointed to by processes" because they will be freed as soon as they are not used anymore.
+
+
+
+
+\paragraph{Page Replacement Algorithms} using an intelligent page replacement policy helps with virtual memory performance:
+\begin{itemize}
+  \item \textbf{Belady - Optimal} - (theoretical) Replace the page that will not be used for the longest period of time in the future. 
+
+  \item \textbf{LRU (least recently used)} - (impractical) Replace the page that has not been used for the longest period of time in the past. 
+
+  \item \textbf{Clock} - (practical LRU) A circular list of pages in memory, where each page has a reference bit. When a page is accessed, its reference bit is set to 1. When a page needs to be replaced, the algorithm checks the pages in a circular manner, clearing the reference bit of each page until it finds a page with a reference bit of 0, which is then replaced.
+
+  \item \textbf{NRU (not recently used)} - (practical more sophisticated LRU) Keep to bits for each page, dirty \& referenced, and periodically turn off referenced (as in clock). Replace victim page with the lowest class from the following: (class 0) not referenced, not dirty, (class 1) not referenced, dirty, (class 2) referenced, not dirty, (class 4) referenced, dirty. 
+
+  \item \textbf{PFRA (page frame reclaim algorithm)} - (used) As mentioned, each frame keeps flags for \code{PG\_referenced} and \code{PG\_accessed} (the latter is set by the hardware on each access). Both bits together define a level of activity (as seen in fig. \ref{fig:PFRA}), where lower activity pages are more likely to be reclaimed. At each access, the kernel increments the activity level, and we periodically decrement the activity (to prevent long history). We keep all frames in an \code{active} list and an \code{inactive} list, and we move frames between the lists based on their activity level.
+
+\end{itemize}
+
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{PFRA-Lists.png}
+  \caption{PFRA swap limits}
+  \label{fig:PFRA-lists}
+\end{figure}
+
+
+
+
+
 % =====================================================
 % ================= Lecture Storage ===================
 % =====================================================
@@ -2723,7 +3035,7 @@ Note: file objects (which represent open files) are not the same as inodes, as t
 6. & \texttt{st\_uid} & user ID of owner \\
 7. & \texttt{st\_gid} & group ID of owner \\
 8. & \texttt{st\_ctime} & last time \blue{metadata (=inode) or data \textbf{changed}} \\
-9. & \texttt{st\_mtime} & last time \blue{data \textbf{changed}} \\
+9. & \texttt{st\_mtime} & last time \blue{data \textbf{modified}}  \\
 10. & \texttt{st\_atime} & last time \blue{metadata (=inode) or data \textbf{accessed}} \\
 11. & \texttt{st\_blksize} & block size of this file object (preferred size for I/O ops) \\
 12. & \texttt{st\_blocks} & number of sectors allocated for this file object \\
@@ -2781,6 +3093,10 @@ Note: The CPU can't directly access/process data on the disk, it must reside on 
 
 
 \paragraph{Sectors \& Blocks} A disk is divided into \textbf{sectors}, which are the smallest addressable units on the disk. Each sector is typically \blue{512 bytes}\gray{ or 4096 bytes in size}. Sectors are grouped into \textbf{blocks}, which are the equivalent of pages in memory, thus each block is \blue{4KB} in size, and \blue{8 sectors}.
+
+Note: Only the \ul{swap area} is divided into frames (like the memory) instead of sectors.
+
+Note 2: The disk gurantees that operations on sectors are atomic, meaning that a read or write operation on a sector will either complete successfully or fail without leaving the sector in an inconsistent state.
 
 
 \paragraph{Partitions \& Mounts} A disk can be divided into \textbf{partitions} using \code{fdisk}, which are contiguous disjoint part of the disk that can host a filesystem. Disks are typically names "/dev/sda","/dev/sdb", while partitions are named "/dev/sda1", "/dev/sda2", etc. 
@@ -2850,7 +3166,7 @@ and to find the block:
 \paragraph{Extents} An extent is a contiguous block of data blocks that are allocated together. Instead of having a separate pointer for each data block, an extent is a single pointer that points to the first block of the extent and contains the length of the extent. This allows for more efficient allocation and reduces fragmentation. Extents are used in modern filesystems such as ext4. 
 
 \begin{itemize}
-  \item ext2 = the "extended file system", does not support extents.
+  \item ext2 = the "extended file system", does not support extents, instead uses the multi-level index.
   \item ext3 = ext2 + journaling. journaling = keeping track of uncommitted changes.
   \item ext4 = ext3 + extents. (so "ext" name unrelated to "extent")
 \end{itemize}
@@ -2859,6 +3175,8 @@ and to find the block:
 \paragraph{FAT (File Allocation Table)} Keeping track of a linked list using the data blocks is inefficient. So to solve that, FAT keeps a file allocation table that for each data block, it registers that pointer to the next data block from the same file. The starting block for the file is pointed to by the dirent, which holds all of the metadata too, so no inodes are needed! (but no multipicity of hard links is allowed)
 
 The \green{advantage} for FAT is that it will be copied to (cached in) the memory, which allows fast lookup in the table. The \red{disadvantage} is that it can become huge.
+
+In the FAT, 0=Free block, (-1)=Broken block (can't be used), (FF)=End of chain, (Other numbers)=Next block in the chain.
 
 
 

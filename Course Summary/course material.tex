@@ -29,6 +29,8 @@
 \usepackage[dvipsnames, table]{xcolor}
 
 
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning}
 
 
 % =====================================================
@@ -46,6 +48,17 @@
 \definecolor{tableCellGray}{HTML}{F2F2F2}
 \definecolor{tableTextGray}{HTML}{808080}
 \definecolor{tableArrowRed}{HTML}{C00000}
+
+% --- Color Definitions ---
+% Defines the colors used in the table to match the image
+\definecolor{tableBlue}{RGB}{219, 229, 241}
+\definecolor{headerRed}{RGB}{192, 80, 77}
+\definecolor{lineRed}{RGB}{192, 80, 77}
+
+% --- Custom Horizontal Line ---
+% Creates a new command for the thick red horizontal rule
+\newcommand{\redhline}{\noalign{\color{lineRed}\hrule height 1.5pt}}
+
 
 
 \definecolor{textcolor}{HTML}{1E293B}
@@ -84,7 +97,8 @@
 % =====================================================
 % =========== Page Headers & Chapters =================
 % =====================================================
-\geometry{margin=1in}
+\geometry{margin=1in} 
+\setlength{\headheight}{15pt} % Add this command to your preamble to fix the fancyhdr warning
 \titleformat{\section}{\large\bfseries}{\thesection}{1em}{}
 \pagestyle{fancy}
 \fancyhead[L]{Course Summary}
@@ -1747,6 +1761,46 @@ In a nutshell, networks can be divided into 5 layers as follows:
 \end{itemize}
 
 
+
+
+\begin{table}[H] % Using [H] from the 'float' package to place it here
+\centering
+\renewcommand{\arraystretch}{1.5} % Increases row height for better spacing
+
+% The \rowcolors command handles the alternating colors automatically and robustly
+\rowcolors{2}{white}{tableBlue} 
+
+\begin{tabular}{|c|l|l|l|l|>{\centering\arraybackslash}p{3.5cm}|}
+    % The header row still needs its own color specifications
+    \rowcolor{tableBlue}
+    \textbf{layer} & \textbf{name} & \textbf{protocols} & \textbf{data unit} & \textbf{addressing} & \multicolumn{1}{c|}{\cellcolor{headerRed}\color{white}\textbf{implemented by}} \\
+    \hline
+
+    % NOTE: No more \rowcolor commands needed on each line below!
+    
+    \textbf{5} & application & HTTP, SMTP & stream, messages & N/A & user-level code \\
+    \redhline
+
+    \textbf{4} & transport & TCP, UDP & segments, datagrams & ports & \multirow{3}{=}{\centering kernel-level code (the operating system)} \\
+    \cline{1-5}
+
+    \textbf{3} & network & IP & packets & IP & \\
+    \cline{1-5}
+
+    \textbf{2} & link & ethernet & frames & MAC & \\
+    \redhline
+
+    \textbf{1} & physical & 802.11 & bits & N/A & hardware (NIC) \\
+    \hline
+\end{tabular}
+\caption{A five-layer network model describing protocols, data units, and implementation levels.}
+\label{tab:network-layers} % It's good practice to add a label for referencing
+\end{table}
+
+
+
+
+
 \noindent\rule{\linewidth}{0.5pt}
 
 \section*{Application Layer (L5)}
@@ -2087,7 +2141,7 @@ $$
 \end{enumerate}
 We also divide the \code{mmap} pages into two types: (1) \textbf{MAP\_SHARED} = changes affect the actual file (\& visible to other processes), (2) \textbf{MAP\_PRIVATE} = changes don't affect the actual fiile; rather, there will be a CoW for the process (other processes will not see changes)
 
-\paragraph{Swapping} \textbf{Swap Space} is a disk area where anonymous pages are written, if the OS decided they have no room in DRAM (memory is full). Pages are said to be "swapped out" when this occurs (and "swapped in" on return). Nowadays we don't distinguish between the terms swapping and paging.
+\paragraph{Swapping} \textbf{Swap Space} is a disk area where \red{anonymous} pages are written, if the OS decided they have no room in DRAM (memory is full). Pages are said to be "swapped out" when this occurs (and "swapped in" on return). Nowadays we don't distinguish between the terms swapping and paging.
 
 
 \paragraph{On-demand Paging} A memory management technique where pages are loaded into memory only when they are needed, rather than preloading all pages at once. i.e. pages are allocated/brought into DRAM only when the process attempts to access it for the first time (resulting in a page fault)
@@ -2283,6 +2337,187 @@ A completely different architecture, but similar concepts, used in IBM PowerPC p
 
 
 \red{Note:} All interrupts are handled in \blue{kernel mode}, CPL=0, including the timer interrupt.
+
+
+
+
+\begin{samepage}
+  \begin{center}
+  \rowcolors{2}{gray!15}{white}
+  \begin{tabular}{|>{\raggedright\arraybackslash}p{6.5cm}|
+  >{\raggedright\arraybackslash}p{6.5cm}|}
+  \hline
+  \rowcolor{blue!30}
+  \textbf{System Calls / Exceptions} & \textbf{Hardware Interrupts} \\
+  \hline
+  If the processor is running user code, a system call or exception transitions control to the kernel for handling.
+  &
+  The kernel immediately handles any incoming hardware interrupt, even if it is already in the middle of handling an exception, system call, or another interrupt.
+  \\
+  \hline
+  System calls can be blocking and cause the process to yield the processor (e.g., \texttt{read()}, \texttt{wait()}).
+  &
+  A hardware interrupt handling routine never yields the processor.
+  \\
+  \hline
+  Handling for a system call or exception can be preempted by an incoming hardware interrupt.
+  &
+  An interrupt handler will not make system calls or cause exceptions (with the exception of a page fault). After handling the interrupt, the kernel may switch to a different process than the one that was previously running.
+  \\
+  \hline
+  \end{tabular}
+  \end{center}
+ \end{samepage}
+
+
+
+
+\paragraph{Kernel Control Paths} A kernel control path is block of instructions that the kernel uses to handle: (1) Syscalls, (2) Hardware Interrupts, (3) Exceptions. Different control paths can interleave with each other as follows:
+
+
+
+\begin{samepage}
+  \begin{center}
+    \rowcolors{2}{gray!15}{white}
+    \begin{tabular}{|>{\raggedright\arraybackslash}p{6.5cm}|
+      >{\raggedright\arraybackslash}p{6.5cm}|}
+      \hline
+      \rowcolor{blue!30}
+      \textbf{System Calls / Exceptions} & \textbf{Hardware Interrupts} \\
+      \hline
+      A handler for a system call or exception will \red{not} cause a new exception (with the notable exception of a page fault).
+      &
+      An interrupt handler will \red{not} make a system call or cause an exception (other than a page fault). After handling is complete, the kernel may schedule a different process to run.
+      \\
+      \hline
+      \textbf{Single Processor:} the handler can be preempted by a hardware interrupt, and it can interleave with all other control paths.
+      &
+      \textbf{Single Processor:} the handler can only interleave a different hardware interrupt handler.
+      \\
+      \hline
+      \textbf{Multi-Processor:} the handlers can interleave with each other, from all control paths.
+      &
+      \textbf{Multi-Processor:} the handlers can interleave with each other, from all control paths.
+      \\
+      \hline
+    \end{tabular}
+  \end{center}
+\end{samepage}
+
+
+\paragraph{Disabling Interrupts} Disabling interrupts is a technique used to prevent the kernel from being interrupted by hardware interrupts while executing critical sections of code. This is typically done to ensure that the code can execute atomically without being preempted. However, disabling interrupts can lead to performance issues and should be used sparingly.
+
+To disable an interrupt we set the flag \blue{\code{IF}} in the \code{RFLAGS} register to 0, and to enable it we set the flag to 1. In critical code, we turn off the \code{IF}, but at the end we set it back to the \ul{previous value}. 
+
+
+
+
+\begin{figure}[H]
+\centering
+
+% Define common styles for both TikZ pictures to ensure consistency
+\tikzset{
+    % Set distances between nodes: vertical and horizontal
+    node distance=1cm and -0.5cm,
+    % Style for decision boxes (blue rectangles)
+    decision/.style={
+        rectangle, 
+        draw, 
+        thick,
+        fill=blue!20, 
+        text width=3.5cm, 
+        text centered, 
+        minimum height=2cm,
+        font=\sffamily
+    },
+    % Style for action boxes (green rounded rectangles)
+    answer/.style={
+        rectangle, 
+        rounded corners, 
+        draw, 
+        thick,
+        fill=green!20, 
+        text width=3.5cm, 
+        text centered, 
+        minimum height=2cm,
+        font=\sffamily
+    },
+    % Style for arrows
+    arrow/.style={
+        draw,
+        thick,
+        -Stealth % Arrow tip style
+    }
+}
+
+%---------------------------------
+% First Diagram (Original Image)
+%---------------------------------
+\begin{minipage}{0.48\textwidth}
+    \centering
+    \textbf{One Core CPU}
+    \vspace{0.5cm} % Add some space below the header
+    
+    % The 'scale' option makes the entire figure smaller
+    \begin{tikzpicture}[scale=0.75, transform shape]
+        % Layer 1
+        \node[decision] (q1) {Is the data structure accessible to hardware interrupts?};
+
+        % Layer 2
+        \node[answer, below left=of q1] (a1) {Disable local interrupts}; 
+        \node[decision, below right=of q1] (q2) {Is the data structure accessible to exceptions or system calls?};
+
+        % Layer 3
+        \node[answer, below=of q2] (a2) {Semaphore lock};
+
+        % Arrows
+        \path[arrow] (q1) -- node[above, sloped] {Yes} (a1);
+        \path[arrow] (q1) -- node[above, sloped] {No} (q2);
+        \path[arrow] (q2) -- node[left] {Yes} (a2);
+    \end{tikzpicture}
+\end{minipage}%
+\hfill % Adds flexible space between the two diagrams
+%---------------------------------
+% Second Diagram (New Image)
+%---------------------------------
+\begin{minipage}{0.48\textwidth}
+    \centering
+    \textbf{Multi-Core CPU}
+    \vspace{0.5cm} % Add some space below the header
+    
+    % The 'scale' option makes the entire figure smaller
+    \begin{tikzpicture}[scale=0.75, transform shape]
+        % Layer 1
+        \node[decision] (q1) {Is the data structure accessible to hardware interrupts?};
+
+        % Layer 2
+        \node[answer, below left=of q1] (a1) {Disable local interrupts + \red{spinlock}};
+        \node[decision, below right=of q1] (q2) {Is the data structure accessible to exceptions or system calls?};
+
+        % Layer 3
+        \node[answer, below=of q2] (a2) {Semaphore lock};
+
+        % Arrows
+        \path[arrow] (q1) -- node[above, sloped] {Yes} (a1);
+        \path[arrow] (q1) -- node[above, sloped] {No} (q2);
+        \path[arrow] (q2) -- node[left] {Yes} (a2);
+    \end{tikzpicture}
+\end{minipage}
+
+\end{figure}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -101,8 +101,8 @@
 \setlength{\headheight}{15pt} % Add this command to your preamble to fix the fancyhdr warning
 \titleformat{\section}{\large\bfseries}{\thesection}{1em}{}
 \pagestyle{fancy}
-\fancyhead[L]{Course Summary}
-\fancyhead[C]{Operating Systems 234123}
+\fancyhead[L]{Operating Systems}
+\fancyhead[C]{\rightmark}
 \fancyhead[R]{Spring 2025}
 
 
@@ -128,7 +128,19 @@
 % =====================================================
 
 \title{Operating Systems (02340123)\\ Summary - Spring 2025}
-\author{Razi \& Yara}
+\author{%
+    \begin{tabular}{c} % Creates a container with one centered column
+        Razi \& Yara \\[2cm]
+        \small
+        Based on the course lectures by Dr. Leonid Raskin, \\
+        \small
+        the slides of Prof. Dan Tsafrir, and the tutorial slides. \\[1.5cm]
+        \itshape \small
+        This is not official course material, but a summary of the course by students. \\
+        \itshape \small
+        All copyrights belong to the original authors.
+    \end{tabular}%
+}
 \date{\today}
 
 \begin{document}
@@ -1850,6 +1862,11 @@ Protocols in Layer 4 provide host-to-host communication services \textit{for pro
         \end{enumerate}
 \end{itemize}
 
+
+\paragraph{TCP Sequence Numbers} TCP uses sequence numbers to ensure that data is delivered in the correct order. Each byte in the stream is assigned a unique sequence number, and the receiver uses these numbers to reassemble the data in the correct order. The sequence number is included in each segment header, allowing the receiver to detect missing segments and request retransmission. 
+
+For each segment sent, the sender waits for an acknowledgment message from the receiver, if he doesn't receive any (the original message or the acknowledgment were lost) he resends the same segment with the same number. The receiver checks the number to prevent multiplicity in case of lost acknowledgment messages.
+
 \paragraph{UDP} "The protocol that doesn't care", i.e. it \red{does not} guarantee reliable delivery nor in-order delivery of data. Provides \textbf{datagrams} (as opposed to a stream) of bytes between two processes. Chunks might get lost or be delivered out of order, \red{but} per-chunk bytes integrity is supported. Said to be \textbf{connectionless} because it does not establish a connection before transmitting data. Compared to TCP, UDP is simpler and has less overhead, lower latency, and no congestion control.
 
 \paragraph{Sockets} Apps communicate with the Transport Layer through \textbf{socket file descriptors}, created via the \code{socket()} system call, instead of \code{open()}. A \textbf{\code{sockfd}} constitutes a communication endpoint.
@@ -1913,6 +1930,26 @@ Sockets are initialized using values from \code{addrinfo} structure, which conta
   \end{center}
 \end{samepage}
 % --- Table code ends ---
+
+
+
+\paragraph{Event Oriented Programming - \code{select()}} In the client-server model, the server can handle multiple clients simultaneously by using the \code{select()} system call. This allows the server to monitor multiple sockets for incoming data and handle them as they arrive, without blocking on any single specific socket (we block on them all together until one is available). The server can use \code{select()} to wait for data on multiple sockets, and when data is available, it can read from the corresponding socket and respond accordingly.
+
+\begin{lstlisting}[language=C]
+int select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *errorfds, struct timeval *restrict timeout);
+\end{lstlisting}
+
+\begin{itemize}
+  \item nfds: The highest-numbered file descriptor in any of the three sets, plus one.
+  \item readfds: A set of file descriptors to be monitored for reading.
+  \item writefds: A set of file descriptors to be monitored for writing.
+  \item errorfds: Not part of the course material.
+  \item timeout: A pointer to a \code{timeval} structure that specifies the maximum time to wait for an event. If \code{NULL}, it will block indefinitely until an event occurs.
+\end{itemize}
+
+
+
+
 
 
 \noindent\rule{\linewidth}{0.5pt}

@@ -24,7 +24,7 @@
 \usepackage{multirow}
 \usepackage{tabularx}
 
-
+\usepackage{pdfpages}
 
 \usepackage[dvipsnames, table]{xcolor}
 
@@ -1869,6 +1869,8 @@ For each segment sent, the sender waits for an acknowledgment message from the r
 
 \paragraph{UDP} "The protocol that doesn't care", i.e. it \red{does not} guarantee reliable delivery nor in-order delivery of data. Provides \textbf{datagrams} (as opposed to a stream) of bytes between two processes. Chunks might get lost or be delivered out of order, \red{but} per-chunk bytes integrity is supported. Said to be \textbf{connectionless} because it does not establish a connection before transmitting data. Compared to TCP, UDP is simpler and has less overhead, lower latency, and no congestion control.
 
+Note: To clarify, UDP still offers some level of reliability, as it uses \textit{checksums} CRC error detection to ensure that the data received is not corrupted. However, it does not guarantee that the data will be delivered or that it will be delivered in the correct order.
+
 \paragraph{Sockets} Apps communicate with the Transport Layer through \textbf{socket file descriptors}, created via the \code{socket()} system call, instead of \code{open()}. A \textbf{\code{sockfd}} constitutes a communication endpoint.
 
 Note: It is recommended to understand what IPs are before continuing this section (\gray{read next section - IP})
@@ -3244,10 +3246,7 @@ In the FAT, 0=Free block, (-1)=Broken block (can't be used), (FF)=End of chain, 
 
 
 
-
-
-
-
+\includepdf[pages=-]{../Compressed Summary/compressed summary.pdf}
 
 
 
@@ -3265,6 +3264,13 @@ In the FAT, 0=Free block, (-1)=Broken block (can't be used), (FF)=End of chain, 
 % ==================================================== 
 \newpage
 \part{Highlights and Notes}
+
+
+
+
+
+\includepdf[pages=-]{../Cheat Sheet/cheat sheet.pdf}
+
 
 
 

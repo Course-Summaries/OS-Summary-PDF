@@ -1,0 +1,290 @@
+\documentclass[8pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{multicol}
+\usepackage[a4paper, margin=0.5in]{geometry}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{titlesec}
+
+% --- Customization for cheat sheet format ---
+\setlist{nosep, leftmargin=*} % Compact lists
+\setlength{\columnsep}{0.5cm} % Space between columns
+\pagestyle{empty} % No page numbers or headers
+
+% --- Section and Subsection Formatting ---
+\newcommand{\sectiondivider}{\vspace{4pt}\hrule\vspace{4pt}}
+\titleformat*{\section}{\normalfont\Large\bfseries\color{blue!80!black}}
+\titleformat*{\subsection}{\normalfont\large\bfseries\color{blue!70!black}}
+
+\begin{document}
+
+\begin{multicols}{2}
+\section*{Processes \& Threads}
+\subsection*{Processes}
+\begin{itemize}
+    \item \textbf{Process}: Program in execution.
+    \item \textbf{Multiprogramming}: Concurrent processes on one core.
+    \item \textbf{Multiprocessing}: One process on multiple cores.
+    \item \textbf{Address Space}: Code (Text), Static Data, Heap, Stack.
+    \item \textbf{PCB (Process Control Block)}: \texttt{task\_struct}, pointed to by \texttt{current}.
+    \item \textbf{PCB Fields}: PID, TGID, state, registers, \texttt{mm\_struct}, family pointers, exit code.
+    \item \textbf{Process States}:
+    \begin{itemize}
+        \item \textbf{Running}: On CPU.
+        \item \textbf{Ready}: Waiting for CPU.
+        \item \textbf{Waiting (Sleeping)}: For event. \texttt{TASK\_INTERRUPTIBLE}, \texttt{TASK\_UNINTERRUPTIBLE}.
+        \item \textbf{Stopped}: Suspended.
+        \item \textbf{Zombie}: Terminated, PCB exists for \texttt{wait()}.
+    \end{itemize}
+    \item \textbf{Process Family}: \textbf{Idle} (PID 0) $\to$ \textbf{init} (PID 1). \textbf{Real Parent}, \textbf{Parent}, \textbf{Orphans} (adopted by init).
+    \item \textbf{Syscalls}: \texttt{fork()}, \texttt{exec()}, \texttt{wait()}/\texttt{waitpid()}, \texttt{exit()}, \texttt{kill()}, \texttt{getpid()}, \texttt{getppid()}.
+    \item \texttt{fork()}: returns 0 to child, PID to parent.
+\end{itemize}
+
+\subsection*{Threads}
+\begin{itemize}
+    \item \textbf{Threads}: Execution units within a process.
+    \item \textbf{Multithreading}: Process with multiple threads.
+    \begin{itemize}
+        \item \textbf{Shared}: Memory space, FDT, directory, signal handlers.
+        \item \textbf{Unique}: Stack, registers (PC, SP), TID.
+    \end{itemize}
+    \item \textbf{Thread Group}: Threads sharing a PID (TGID). \texttt{getpid()} $\to$ TGID, \texttt{gettid()} $\to$ TID.
+    \item \texttt{exit()} terminates the entire thread group.
+    \item \textbf{Pthreads}: \texttt{pthread\_create()}, \texttt{pthread\_join()}, \texttt{pthread\_exit()}.
+    \item \textbf{User Level Threads (ULTs)}: Managed by user-library, no true parallelism.
+    \item \textbf{Kernel Threads}: OS-level tasks, no memory space switch.
+\end{itemize}
+
+\subsection*{Signals}
+\begin{itemize}
+    \item \textbf{Signal}: Asynchronous notification.
+    \item Wakes a waiting process.
+    \item \textbf{Handling}: Custom handler (\texttt{sigaction()}), ignore (\texttt{SIG\_IGN}), default (\texttt{SIG\_DFL}).
+    \item \textbf{Masking}: Block signals (\texttt{sigprocmask()}), becomes "pending".
+    \item \textbf{Unblockable Signals}: \texttt{SIGKILL}, \texttt{SIGSTOP}.
+    \item \textbf{Common Signals}: \texttt{SIGSEGV}, \texttt{SIGILL}, \texttt{SIGCHLD}, \texttt{SIGINT}, Signal 0.
+\end{itemize}
+
+\sectiondivider
+\section*{IPC \& System Calls}
+\begin{itemize}
+    \item \textbf{clone()}: Creates processes/threads. Flags: \texttt{CLONE\_VM}, \texttt{CLONE\_FILES}, \texttt{CLONE\_SIGHAND}, \texttt{CLONE\_THREAD}.
+    \item \textbf{Copy-on-Write (COW)}: \texttt{fork()} optimization, duplicates page on write.
+    \item \textbf{Pipe}: Unidirectional buffer (\texttt{int fd[2]}).
+    \item \textbf{FIFO (Named Pipe)}: Filesystem pipe (\texttt{mkfifo()}) for unrelated processes.
+\end{itemize}
+
+\sectiondivider
+\section*{Boot \& Modules}
+\begin{itemize}
+    \item \textbf{Booting Sequence}: BIOS $\to$ MBR $\to$ Boot Loader (GRUB) $\to$ Kernel (\texttt{/sbin/init}).
+    \item \textbf{Kernel Modules}: Dynamically loadable code (\texttt{init\_module()}, \texttt{cleanup\_module()}).
+    \item \textbf{Device Files}: In \texttt{/dev}. \textbf{Major} (driver), \textbf{minor} (instance).
+        \begin{itemize}
+            \item \textbf{Character}: Stream-based.
+            \item \textbf{Block}: Addressable.
+            \item \textbf{Pseudo}: Virtual (\texttt{/dev/null}).
+        \end{itemize}
+    \item \textbf{\texttt{file\_operations}} struct: Driver function pointers, registered with \texttt{register\_chrdev()}.
+\end{itemize}
+
+\sectiondivider
+\section*{CPU Scheduling}
+\subsection*{Concepts}
+\begin{itemize}
+    \item \textbf{Time Sharing}: CPU virtualization.
+    \item \textbf{Process Types}: \textbf{I/O-bound} (latency-sensitive), \textbf{CPU-bound}.
+    \item \textbf{Preemption}: Forcible process stop, via \textbf{Quantum}.
+    \item \textbf{Scheduling Metrics}:
+    \begin{itemize}
+        \item $T_{wait} = T_{start} - T_{submit}$.
+        \item $T_{resp} = T_{end} - T_{submit}$.
+        \item Slowdown: $1 + \frac{T_{wait}}{T_{run}}$.
+    \end{itemize}
+\end{itemize}
+\subsection*{Batch (Non-Preemptive) Schedulers}
+\begin{itemize}
+    \item \textbf{FCFS}: First-Come, First-Served.
+    \item \textbf{SJF}: Shortest Job First.
+    \item \textbf{EASY}: FCFS with \textbf{backfilling}.
+\end{itemize}
+
+\subsection*{Preemptive Schedulers}
+\begin{itemize}
+    \item \textbf{Round Robin (RR)}: Quantum-based circular queue.
+    \item \textbf{SRTF}: Shortest Remaining Time First.
+    \item \textbf{Selfish RR}: Two-level queue with aging.
+    \item \textbf{Gang Scheduling}: RR for parallel jobs.
+\end{itemize}
+
+\subsection*{Linux Schedulers}
+\begin{itemize}
+    \item \textbf{Linux $\le$ 2.4 ($O(n)$)}:
+    \begin{itemize}
+        \item \textbf{HZ}: Time interrupts per second.
+        \item \textbf{Tick}: Time between time interrupts.
+        \item \textbf{Policies}: \texttt{SCHED\_RR}, \texttt{SCHED\_FIFO}, \texttt{SCHED\_OTHER}.
+        \item \textbf{Epoch}: Cycle for all runnable tasks.
+        \item \textbf{Priority}: Static (\texttt{nice}) + Dynamic (\texttt{counter}).
+        \item New epoch counter: $C_{new} = \lfloor \frac{C_{old}}{2} \rfloor + P_{static}$.
+        \item \texttt{schedule()} finds best \texttt{goodness()}.
+    \end{itemize}
+    \item \textbf{CFS ($O(\log N)$)}:
+    \begin{itemize}
+        \item \textbf{Goal}: Fair CPU time via equal \texttt{vruntime}.
+        \item \textbf{vruntime}: Task with lowest runs.
+        \item $\Delta vruntime = \Delta T_{actual} \times \frac{W_{ideal}}{W_{task}}$.
+        \item \textbf{Data Structure}: Red-black tree ordered by \texttt{vruntime}.
+    \end{itemize}
+\end{itemize}
+
+\sectiondivider
+\section*{Context Switch}
+\begin{itemize}
+    \item \textbf{Context}: Process state.
+    \item \textbf{Overhead}: \textbf{Direct} (save/load state), \textbf{Indirect} (cache pollution).
+    \item \textbf{Types}: \textbf{Forced} (interrupt), \textbf{Initiated} (syscall).
+    \item \textbf{Mechanism}: State saved to kernel stack. \textbf{TSS} updated.
+    \item \textbf{Flow}: \texttt{schedule()} $\to$ \texttt{context\_switch()} $\to$ \texttt{\_switch\_to\_asm()} $\to$ \texttt{\_switch\_to()}.
+\end{itemize}
+
+\sectiondivider
+\section*{Synchronization}
+\subsection*{Concepts}
+\begin{itemize}
+    \item \textbf{Race Condition}: Timing-dependent outcome.
+    \item \textbf{Critical Section}: Requires mutual exclusion.
+    \item \textbf{Atomicity}: All-or-nothing operation.
+    \item \textbf{Memory Consistency}: Order of memory ops, enforced by \textbf{memory fence}.
+    \item \textbf{Amdahl's Law}:
+    $$ Speedup = \frac{1}{s + \frac{1-s}{n}} \le \frac{1}{s} $$
+\end{itemize}
+
+\subsection*{Mechanisms}
+\begin{itemize}
+    \item \textbf{Lock}: \texttt{acquire()} and \texttt{release()}.
+    \item \textbf{Spinlock}: Busy-waits for lock.
+    \item \textbf{Mutex}: May block (sleep) if lock is unavailable.
+    \item \textbf{Semaphore}: Counter with wait queue. \texttt{wait()} (P), \texttt{signal()} (V).
+    \item \textbf{Condition Variable}: Wait for condition inside critical section. \texttt{cond\_wait}, \texttt{cond\_signal}.
+\end{itemize}
+
+\subsection*{Deadlocks}
+\begin{itemize}
+    \item \textbf{Deadlock}: Processes blocked waiting for each other's resources.
+    \item \textbf{Livelock}: State changes, no progress.
+    \item \textbf{Starvation}: Process perpetually denied resources.
+    \item \textbf{Four Necessary Conditions}: Mutual Exclusion, Hold \& Wait, No Preemption, Circular Wait.
+    \item \textbf{Handling}:
+    \begin{itemize}
+        \item \textbf{Prevention}: Violate one condition (e.g., lock ordering).
+        \item \textbf{Avoidance}: \textbf{Banker's Algorithm}.
+        \item \textbf{Detection \& Recovery}: Find cycle and kill process.
+    \end{itemize}
+\end{itemize}
+
+
+\sectiondivider
+\section*{Networking}
+\begin{itemize}
+    \item \textbf{Protocol Stack}: L5-App, L4-Transport, L3-Network, L2-Link.
+    \item \textbf{TCP}: Reliable, connection-oriented, stream-based.
+    \item \textbf{UDP}: Unreliable, connectionless, datagram-based.
+    \item \textbf{IP Address}: Logical host address (network part + host part).
+    \item \textbf{Socket}: Communication endpoint (FD). 5-tuple identifies connection.
+    \item \textbf{TCP Flow}: Server: \texttt{socket} $\to$ \texttt{bind} $\to$ \texttt{listen} $\to$ \texttt{accept}. Client: \texttt{socket} $\to$ \texttt{connect}.
+    \item \textbf{Ethernet (L2)}: LAN technology, uses \textbf{MAC addresses}.
+    \item \textbf{Key Protocols}: \textbf{ARP} (IP $\to$ MAC), \textbf{DHCP} (dynamic IP), \textbf{NAT} (private $\leftrightarrow$ public IP).
+\end{itemize}
+
+
+
+\sectiondivider
+\section*{Virtual Memory}
+\subsection*{Concepts}
+\begin{itemize}
+    \item \textbf{Virtual Memory (VM)}: Private, contiguous address space abstraction.
+    \item \textbf{Page} (virtual, 4KB) \& \textbf{Frame} (physical).
+    \item \textbf{Address Translation}: \textbf{MMU} translates VA $\to$ PA via page tables.
+    \item \textbf{Page Table}: Maps virtual pages to physical frames.
+    \item \textbf{PTE (Page Table Entry)}: Contains frame number and bits: Present, Dirty, Accessed, R/W, U/S.
+    \item \textbf{Page Fault}: Trap on access to unmapped page.
+        \begin{itemize}
+            \item \textbf{Major Fault}: Fetch from disk.
+            \item \textbf{Minor Fault}: Page in memory, mapping missing.
+        \end{itemize}
+    \item \textbf{TLB}: Hardware cache for VA $\to$ PA translations.
+\end{itemize}
+
+\subsection*{Paging \& Swapping}
+\begin{itemize}
+    \item \textbf{On-Demand Paging}: Load pages on first access.
+    \item \textbf{Swap Area}: Disk space for evicted pages.
+    \item \textbf{Paging out}: Copying page from DRAM to disk.
+    \item \textbf{kswapd}: Kernel thread to reclaim page frames.
+    \item \textbf{Thrashing}: Excessive paging, little progress.
+\end{itemize}
+
+\subsection*{Page Replacement Algorithms}
+\begin{itemize}
+    \item \textbf{Goal}: Choose victim page to evict.
+    \item \textbf{Belady's Optimal}: Replace page used furthest in future.
+    \item \textbf{LRU}: Replace least recently used page.
+    \item \textbf{Clock Algorithm}: LRU approximation with reference bit.
+    \item \textbf{Linux PFRA}: Two lists (\textbf{active}, \textbf{inactive}) to approximate LRU.
+\end{itemize}
+
+\subsection*{Linux Implementation}
+\begin{itemize}
+    \item \textbf{Multi-Level Page Tables}: 4-level on x86-64. \textbf{CR3} points to top level.
+    \item \textbf{mm\_struct}: Process memory descriptor.
+    \item \textbf{vm\_area\_struct (VMA)}: Contiguous memory region.
+    \item \textbf{mmap()}: Creates a new VMA.
+    \item \textbf{Copy-on-Write (COW)}: On \texttt{fork()}, share pages, copy on write.
+\end{itemize}
+
+\sectiondivider
+\section*{Storage \& Filesystems}
+\subsection*{Storage Devices}
+\begin{itemize}
+    \item \textbf{HDD}: Access time = seek time + rotational latency.
+    \item \textbf{SSD}: Flash memory, low random access latency.
+    \item \textbf{DMA}: Device-to-memory transfer without CPU.
+\end{itemize}
+
+\subsection*{RAID}
+\begin{itemize}
+    \item \textbf{RAID 0 (Striping)}: Best performance, no redundancy.
+    \item \textbf{RAID 1 (Mirroring)}: Full redundancy.
+    \item \textbf{RAID 4 (Parity Disk)}: Write bottleneck on parity disk.
+    \item \textbf{RAID 5 (Distributed Parity)}: No parity disk bottleneck.
+    \item \textbf{RAID 6 (Dual Parity)}: Protects against two disk failures.
+\end{itemize}
+
+\subsection*{Filesystem Concepts}
+\begin{itemize}
+    \item \textbf{File}: Logical unit of information.
+    \item \textbf{inode}: File metadata structure.
+    \item \textbf{dirent}: Maps filename to inode number.
+    \item \textbf{Links}: \textbf{Hard Link} (same inode), \textbf{Symbolic Link} (path string).
+    \item \textbf{File Descriptor (FD)}: Integer handle for an open file, index into \textbf{FDT}.
+    \item FDT entry $\to$ system-wide \textbf{File Object} $\to$ \textbf{inode}.
+\end{itemize}
+
+\subsection*{Filesystem Implementation}
+\begin{itemize}
+    \item \textbf{Layout}: Superblock, bitmaps, inode table, data blocks.
+    \item \textbf{Allocation}: \textbf{Multi-Level Index}, \textbf{Extents}, \textbf{FAT}.
+    \item \textbf{Journaling}: Transaction log for consistency.
+    \item \textbf{Path Resolution}: Traverse directories to find inode.
+\end{itemize}
+
+
+\end{multicols}
+
+\end{document}

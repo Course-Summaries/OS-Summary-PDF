@@ -23,3 +23,5 @@ jobs:
           files: |
             Course Summary/course material.pdf
             Functions/functions.pdf
+            Cheat Sheet/cheat sheet.pdf
+            Compressed Summary/compressed summary.pdf

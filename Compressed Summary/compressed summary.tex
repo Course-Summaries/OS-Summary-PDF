@@ -1,0 +1,356 @@
+\documentclass[8pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{multicol}
+\usepackage[a4paper, margin=0.5in]{geometry}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{titlesec}
+
+% --- Customization for cheat sheet format ---
+\setlist{nosep, leftmargin=*} % Compact lists
+\setlength{\columnsep}{0.5cm} % Space between columns
+\pagestyle{empty} % No page numbers or headers
+
+% --- Section and Subsection Formatting ---
+\newcommand{\sectiondivider}{\vspace{4pt}\hrule\vspace{4pt}}
+\titleformat*{\section}{\normalfont\Large\bfseries\color{blue!80!black}}
+\titleformat*{\subsection}{\normalfont\large\bfseries\color{blue!70!black}}
+
+\begin{document}
+
+\begin{multicols}{2}
+
+\section*{Introduction to Operating Systems}
+\subsection*{Core Concepts}
+\begin{itemize}
+    \item \textbf{Operating System (OS)}: Software that acts as an intermediary, coordinating application execution, providing common services, and managing hardware resources.
+    \item An OS is a reactive, "event-driven" system, unlike typical programs that run start-to-finish. It waits for events and responds to them.
+    \item \textbf{Kernel}: The central part of the OS that manages all tasks and hardware. A \textbf{bare metal OS} is a non-virtualized OS.
+    \item \textbf{Events}: Can be \textbf{asynchronous} (from external devices like keyboards, networks) or \textbf{synchronous} (from program execution like syscalls, page faults).
+    \item \textbf{Core OS Services}:
+    \begin{itemize}
+        \item \textbf{Isolation}: Prevents processes from interfering with each other, often via multiplexing.
+        \item \textbf{Abstraction}: Hides hardware complexity and provides high-level, portable interfaces.
+        \item \textbf{Resource Sharing}: Manages hardware like the CPU and memory among multiple applications.
+    \end{itemize}
+    \item \textbf{Privilege Levels (CPL)}: The CPU defines \textbf{Kernel Mode} ($CPL=0$) for privileged instructions and \textbf{User Mode} ($CPL=3$) for applications.
+    \item \textbf{System Call (Syscall)}: The gateway for user-mode apps to request kernel services. It raises the privilege level to CPL=0 and transfers control to the kernel. On error, they often set the global \texttt{errno} variable.
+    \item \textbf{POSIX}: A set of standard OS interfaces based on the Unix operating system.
+\end{itemize}
+
+\subsection*{Virtualization}
+\begin{itemize}
+    \item \textbf{Virtualization}: An abstraction that presents each process with virtual versions of resources (CPU, memory). This provides convenience, portability, and protection, but adds overhead.
+    \item \textbf{Multiplexing}: Creating the illusion that each process has its own dedicated resources when they are actually shared. The OS decides how to divide them.
+    \item \textbf{Hypervisor}: The underlying OS in a virtualized environment that allows running multiple virtual servers on a single physical server.
+\end{itemize}
+
+\subsection*{Basic Hardware}
+\begin{itemize}
+    \item \textbf{Processor/Core}: Executes machine instructions. Multiple cores run in parallel. (Typical access time: $\sim$3ns).
+    \item \textbf{Memory (DRAM)}: Fast, volatile storage accessible to all cores. (Typical access time: $\sim$100ns).
+    \item \textbf{Disk (Storage)}: Slow, non-volatile (durable) storage. Information must be moved to memory for the CPU to process it. (Typical access time: $\sim$1ms).
+\end{itemize}
+
+\sectiondivider
+\section*{Processes \& Threads}
+\subsection*{Processes}
+\begin{itemize}
+    \item \textbf{Process}: An instance of a program in execution.
+    \item \textbf{Multiprogramming}: Running multiple processes concurrently on a single core by multiplexing the CPU.
+    \item \textbf{Multiprocessing}: Using more than one core to run a single process.
+    \item \textbf{Address Space}:
+        \begin{itemize}
+            \item \textbf{Code (Text)}: Program instructions.
+            \item \textbf{Static Data}: Global/static variables.
+            \item \textbf{Heap}: For dynamic memory allocation (\texttt{malloc}).
+            \item \textbf{Stack}: For function calls and local variables.
+        \end{itemize}
+    \item \textbf{PCB (Process Control Block)}: OS data structure (\texttt{task\_struct}) to manage a process, pointed to by the \texttt{current} pointer. The process list is a cyclic doubly-linked list.
+    \item \textbf{PCB Fields}: Contains PID, TGID, state, registers, memory info (\texttt{mm\_struct}), family pointers (\texttt{parent}, \texttt{children}), exit code, etc.
+    \item \textbf{Process States}:
+    \begin{itemize}
+        \item \textbf{Running}: Executing on the CPU.
+        \item \textbf{Ready}: Runnable, but waiting for the CPU.
+        \item \textbf{Waiting (Sleeping)}: Waiting for an event (e.g., I/O). States can be \texttt{TASK\_INTERRUPTIBLE} (can be woken by signals) or \texttt{TASK\_UNINTERRUPTIBLE} (cannot, e.g., during a critical I/O operation).
+        \item \textbf{Stopped}: Execution suspended (e.g., by a debugger via Ctrl+Z).
+        \item \textbf{Zombie}: Terminated, but its PCB still exists for the parent to collect the exit status via \texttt{wait()}.
+    \end{itemize}
+    \item \textbf{Process Family}: \textbf{Idle Process} (PID 0) is the first process, which creates the \textbf{init process} (PID 1). \textbf{Real Parent} is the original creator. \textbf{Parent} is the process currently tracing it. \textbf{Orphans} are adopted by the \textbf{init} process.
+    \item \textbf{Syscalls}: \texttt{fork()} (create child), \texttt{exec()} (replace program image), \texttt{wait()}/\texttt{waitpid()} (wait for child), \texttt{exit()} (terminate), \texttt{kill()} (send signal), \texttt{getpid()} (get Thread Group ID), \texttt{getppid()} (get parent PID).
+    \item \texttt{fork()} returns 0 to the child and the child's PID to the parent.
+\end{itemize}
+
+\subsection*{Threads}
+\begin{itemize}
+    \item \textbf{Threads}: Units of execution within a process. In Linux, they are implemented as processes that share resources.
+    \item \textbf{Multithreading}: A process with multiple threads of execution.
+    \begin{itemize}
+        \item \textbf{Shared}: Memory space (heap, data, code), file descriptors (FDT), working directory, signal handlers.
+        \item \textbf{Unique}: Stack, registers (incl. PC, SP), Thread ID (TID).
+    \end{itemize}
+    \item \textbf{Thread Group}: A set of threads sharing a process ID (PID), which is the Thread Group ID (TGID). \texttt{getpid()} returns TGID, \texttt{gettid()} returns the unique TID.
+    \item An \texttt{exit()} call by any thread terminates the entire thread group.
+    \item \textbf{Pthreads}: POSIX API for threads. \texttt{pthread\_create()}, \texttt{pthread\_join()}, \texttt{pthread\_exit()}.
+    \item \textbf{User Level Threads (ULTs)}: Managed by a user-level library, invisible to the kernel. Faster context switching but no true parallelism on multi-core systems.
+    \item \textbf{Kernel Threads}: Processes created by the OS to perform kernel tasks. They do not switch the memory space on context switch.
+\end{itemize}
+
+\subsection*{Signals}
+\begin{itemize}
+    \item \textbf{Signal}: An asynchronous notification sent to a process about an event. Handled in user mode when returning from the kernel.
+    \item A signal can wake a waiting process (e.g., from a blocking syscall).
+    \item \textbf{Handling}: A process can define a custom handler (\texttt{signal()}, \texttt{sigaction()}), ignore the signal (\texttt{SIG\_IGN}), or use the default action (\texttt{SIG\_DFL}, usually "die" or "ignore").
+    \item \textbf{Masking}: A process can block signals using \texttt{sigprocmask()} to prevent race conditions. Blocked signals become "pending".
+    \item \textbf{Unblockable Signals}: \texttt{SIGKILL} (terminate) and \texttt{SIGSTOP} (suspend) cannot be caught, blocked, or ignored. \texttt{SIGCONT} (resume) is also special.
+    \item \textbf{Common Signals}: \texttt{SIGSEGV} (segfault), \texttt{SIGILL} (illegal instruction), \texttt{SIGCHLD} (child status changed), \texttt{SIGINT} (Ctrl+C), \textbf{Signal 0} (null signal to check if a process exists).
+\end{itemize}
+
+\sectiondivider
+\section*{IPC \& System Calls}
+\begin{itemize}
+    \item \textbf{clone()}: Linux syscall to create processes/threads. Arguments control resource sharing:
+        \begin{itemize}
+            \item \texttt{CLONE\_VM}: Share memory space.
+            \item \texttt{CLONE\_FILES}: Share file descriptor table.
+            \item \texttt{CLONE\_SIGHAND}: Share signal handlers.
+            \item \texttt{CLONE\_THREAD}: Place in same thread group (implies parent is caller's parent).
+        \end{itemize}
+    \item \textbf{Copy-on-Write (COW)}: A \texttt{fork()} optimization. The parent's memory pages are not physically copied for the child. A page is only duplicated when the parent or child writes to it.
+    \item \textbf{Pipe}: Unidirectional kernel memory buffer (\texttt{int fd[2]}) for communication between related processes. Read blocks if the pipe is empty; write blocks if it is full.
+    \item \textbf{FIFO (Named Pipe)}: A special file in the filesystem (\texttt{mkfifo()}) for IPC between unrelated processes. A process opening a FIFO for read-only will block until another opens for write, and vice-versa.
+\end{itemize}
+
+\sectiondivider
+\section*{Boot \& Modules}
+\begin{itemize}
+    \item \textbf{Booting Sequence}:
+    \begin{enumerate}
+        \item \textbf{BIOS}: Initializes hardware, finds a bootable device, loads the MBR.
+        \item \textbf{MBR} (Master Boot Record, 512 bytes): Loads the boot loader.
+        \item \textbf{Boot Loader (GRUB)}: Loads the kernel (\texttt{bzImage}) and \textbf{initramfs} (initial RAM filesystem with essential drivers).
+        \item \textbf{Kernel}: Uses initramfs, mounts the real root filesystem, and runs \texttt{/sbin/init} (PID 1).
+    \end{enumerate}
+    \item \textbf{Kernel Modules}: Dynamically loadable code (e.g., drivers) that can be added at runtime without rebooting. Handled by \texttt{init\_module()} and \texttt{cleanup\_module()}.
+    \item \textbf{Device Files}: Special files in \texttt{/dev} representing hardware. Identified by a \textbf{major} number (driver) and a \textbf{minor} number (device instance).
+    \begin{itemize}
+        \item \textbf{Character}: Stream-based (e.g., \texttt{/dev/tty}).
+        \item \textbf{Block}: Block-based, addressable (e.g., \texttt{/dev/sda}).
+        \item \textbf{Pseudo}: Virtual, e.g., \texttt{/dev/null}, \texttt{/dev/zero}.
+    \end{itemize}
+    \item \textbf{\texttt{file\_operations}} struct: Kernel struct with function pointers (\texttt{open}, \texttt{read}, etc.) that a driver implements to define its behavior. Registered with \texttt{register\_chrdev()}.
+\end{itemize}
+
+\sectiondivider
+\section*{CPU Scheduling}
+\subsection*{Concepts}
+\begin{itemize}
+    \item \textbf{Time Sharing}: The OS virtualizes the CPU by dividing its time among multiple processes, creating an illusion of parallelism.
+    \item \textbf{Process Types}: \textbf{I/O-bound} tasks are latency-sensitive (e.g., interactive shells). \textbf{CPU-bound} tasks need raw computation speed.
+    \item \textbf{Preemption}: Forcibly stopping a running process to run another. This is managed using a timer interrupt and a time slice called a \textbf{Quantum}.
+    \item \textbf{Scheduling Metrics}:
+    \begin{itemize}
+        \item Wait Time: $T_{wait} = T_{start} - T_{submit}$.
+        \item Response Time: $T_{resp} = T_{end} - T_{submit}$.
+        \item Slowdown: $1 + \frac{T_{wait}}{T_{run}}$.
+    \end{itemize}
+\end{itemize}
+\subsection*{Batch (Non-Preemptive) Schedulers}
+\begin{itemize}
+    \item \textbf{FCFS (First-Come, First-Served)}: Simple and fair, but can suffer from the "convoy effect" where short jobs get stuck behind long ones.
+    \item \textbf{SJF (Shortest Job First)}: Optimal for average wait time but requires knowing runtimes in advance and can starve long jobs.
+    \item \textbf{EASY}: An FCFS-based scheduler with \textbf{backfilling}, which allows short, later-arriving jobs to run early if they won't delay the job at the head of the queue.
+\end{itemize}
+
+\subsection*{Preemptive Schedulers}
+\begin{itemize}
+    \item \textbf{Round Robin (RR)}: Each process gets one quantum in a circular queue. Good for interactivity. With a very large quantum, it behaves like FCFS.
+    \item \textbf{SRTF (Shortest Remaining Time First)}: Preemptive version of SJF. Optimal for average response time but still risks starvation.
+    \item \textbf{Selfish RR}: A two-level queue system. New processes wait in a FIFO queue while "old" processes are scheduled with RR. Promotes fairness using an "aging" mechanism to eventually move new jobs to the old queue.
+    \item \textbf{Gang Scheduling}: An RR variant for parallel jobs, where all threads of a job are scheduled to run concurrently in the same time slot.
+\end{itemize}
+
+\subsection*{Linux Schedulers}
+\begin{itemize}
+    \item \textbf{Linux $\le$ 2.4 ($O(n)$ scheduler)}:
+    \begin{itemize}
+        \item \textbf{Policies}: \texttt{SCHED\_RR}, \texttt{SCHED\_FIFO} (real-time), \texttt{SCHED\_OTHER} (default).
+        \item \textbf{Epoch}: A period where every runnable task gets a chance to run. At the end of an epoch, priorities are recalculated for *all* tasks.
+        \item \textbf{Priority}: A combination of fixed \textbf{static priority} (user-space \texttt{nice} value from -20 to +19) and a \textbf{dynamic priority}, or \texttt{counter}, which is the remaining time slice.
+        \item The counter is recalculated for a task at a new epoch: $C_{new} = \lfloor \frac{C_{old}}{2} \rfloor + P_{static}$. This formula favors I/O-bound tasks, as they often don't use their full quantum, so their old counter is not zero when recalculated.
+        \item \textbf{Core Function}: \texttt{schedule()} iterates all runnable tasks to find the one with the best \texttt{goodness()} value (based on counter and other factors).
+    \end{itemize}
+    \item \textbf{CFS (Completely Fair Scheduler, $O(\log N)$)}:
+    \begin{itemize}
+        \item \textbf{Goal}: Give each task a fair share of the processor. It aims to keep each task's virtual runtime (\texttt{vruntime}) equal.
+        \item \textbf{vruntime}: An accounting variable. The task with the minimum \texttt{vruntime} is chosen to run next.
+        \item Vruntime advances more slowly for higher-priority (higher-weighted) tasks: $\Delta vruntime = \Delta T_{actual} \times \frac{W_{ideal}}{W_{task}}$.
+        \item \textbf{Data Structure}: Uses a \textbf{red-black tree} to store runnable tasks, ordered by \texttt{vruntime}. This makes picking the next task to run very efficient.
+    \end{itemize}
+\end{itemize}
+
+\sectiondivider
+\section*{Context Switch}
+\begin{itemize}
+    \item \textbf{Context}: The complete state of a process (CPU registers, Program Counter, stack pointer, memory state).
+    \item \textbf{Overhead}: \textbf{Direct} (time to save/load CPU state) and \textbf{Indirect} (performance loss from cache pollution, TLB flushes, etc.).
+    \item \textbf{Types}: \textbf{Forced} (involuntary, due to an interrupt) vs. \textbf{Initiated} (voluntary, due to a syscall like \texttt{wait()}).
+    \item \textbf{Mechanism}: The CPU state is saved to the task's kernel stack (in the \texttt{thread\_struct} field of the PCB). A per-core hardware struct, the \textbf{TSS (Task State Segment)}, is updated to point to the new task's kernel stack.
+    \item \textbf{Flow}: \texttt{schedule()} $\to$ \texttt{context\_switch()} $\to$ \texttt{\_switch\_to\_asm()} (saves/restores general-purpose registers) $\to$ \texttt{\_switch\_to()} (updates kernel stack pointer in TSS).
+\end{itemize}
+
+\sectiondivider
+\section*{Synchronization}
+\subsection*{Concepts}
+\begin{itemize}
+    \item \textbf{Race Condition}: Program outcome depends unpredictably on the timing of concurrent executions.
+    \item \textbf{Critical Section}: A piece of code that accesses shared data and must not be concurrently executed by more than one thread.
+    \item \textbf{Atomicity}: An operation that executes as a single, indivisible, all-or-nothing unit. On multi-core CPUs, this requires hardware support (e.g., \texttt{lock} prefix on x86 instructions).
+    \item \textbf{Memory Consistency}: Defines the order in which memory operations from one CPU core are visible to others. Enforced with a \textbf{memory fence} (or barrier).
+    \item \textbf{Amdahl's Law}: Max speedup from parallelization, where $s$ is the serial fraction and $n$ is processors.
+    $$ Speedup = \frac{1}{s + \frac{1-s}{n}} \le \frac{1}{s} $$
+\end{itemize}
+
+\subsection*{Mechanisms}
+\begin{itemize}
+    \item \textbf{Lock}: A primitive with \texttt{acquire()} and \texttt{release()} operations to enforce mutual exclusion.
+    \item \textbf{Spinlock}: A lock that causes a thread to "busy-wait" (spin in a tight loop) until the lock is free. Implemented with atomic instructions like \texttt{test\_and\_set} or \texttt{compare-and-swap}. The \texttt{volatile} keyword is used to prevent compiler reordering of accesses to the lock variable.
+    \item \textbf{Mutex}: A lock that may cause the thread to sleep (\textbf{block}) if the lock is unavailable. Use a spinlock if the expected wait time is less than a context switch; otherwise, use a mutex.
+    \item \textbf{Semaphore}: An integer counter with a waiting queue. \texttt{wait()} (P) decrements (and potentially blocks if 0); \texttt{signal()} (V) increments (and potentially wakes a waiting thread). Can be binary (like a mutex) or counting.
+    \item \textbf{Condition Variable}: Used with a mutex to allow threads to wait for a specific condition to become true (\texttt{cond\_wait}) without busy-waiting. Another thread uses \texttt{cond\_signal} to notify waiters that the condition may now be true.
+\end{itemize}
+
+\subsection*{Deadlocks}
+\begin{itemize}
+    \item \textbf{Deadlock}: A set of processes are blocked, each waiting for a resource held by another process in the set.
+    \item \textbf{Livelock}: Processes continuously change state in response to each other but make no forward progress.
+    \item \textbf{Starvation}: A process is perpetually denied necessary resources to proceed.
+    \item \textbf{Four Necessary Conditions for Deadlock}:
+    \begin{enumerate}
+        \item \textbf{Mutual Exclusion}: At least one resource must be non-sharable.
+        \item \textbf{Hold and Wait}: A process holds at least one resource and is waiting for another.
+        \item \textbf{No Preemption}: A resource cannot be forcibly taken from a process.
+        \item \textbf{Circular Wait}: A cycle of processes exists, e.g., $P_0$ waits for $P_1$'s resource, $P_1$ waits for $P_2$'s, and $P_2$ waits for $P_0$'s.
+    \end{enumerate}
+    \item \textbf{Handling Methods}:
+    \begin{itemize}
+        \item \textbf{Prevention}: Violate one of the 4 conditions. A common method is to enforce a total ordering on lock acquisition to prevent circular wait.
+        \item \textbf{Avoidance}: Use algorithms like the \textbf{Banker's Algorithm} to ensure the system never enters an unsafe state by analyzing resource requests.
+        \item \textbf{Detection \& Recovery}: Allow deadlocks to occur, detect them (e.g., find a cycle in the resource allocation graph), and recover (e.g., kill a process).
+    \end{itemize}
+\end{itemize}
+
+\sectiondivider
+\section*{Virtual Memory}
+\subsection*{Concepts}
+\begin{itemize}
+    \item \textbf{Virtual Memory (VM)}: An abstraction that provides each process with a private, large, contiguous address space, isolating it from other processes and from the physical memory layout.
+    \item \textbf{Page} \& \textbf{Frame}: VM is divided into fixed-size \textbf{pages} (e.g., 4KB). Physical memory is divided into same-sized \textbf{frames}.
+    \item \textbf{Address Translation}: The \textbf{MMU} (Memory Management Unit) is hardware that translates Virtual Addresses (VAs) to Physical Addresses (PAs) using page tables.
+    \item \textbf{Page Table}: A per-process data structure that maps virtual pages to physical frames.
+    \item \textbf{PTE (Page Table Entry)}: An entry in the page table. Contains the physical frame number and control bits: \textbf{Present} (is page in RAM?), \textbf{Dirty} (has page been written to?), \textbf{Accessed}, Read/\textbf{Write}, \textbf{User}/Supervisor.
+    \item \textbf{Page Fault}: A hardware trap to the OS, triggered when a program accesses a page that is not mapped in physical memory (e.g., `Present` bit is 0).
+        \begin{itemize}
+            \item \textbf{Major Fault}: Page must be fetched from disk.
+            \item \textbf{Minor Fault}: Page is in memory, but the mapping is missing (e.g., first access, Copy-on-Write).
+        \end{itemize}
+    \item \textbf{TLB (Translation Lookaside Buffer)}: A fast hardware cache on the CPU for recent VA $\to$ PA translations to accelerate address translation. A TLB miss requires a hardware page table walk.
+\end{itemize}
+
+\subsection*{Paging \& Swapping}
+\begin{itemize}
+    \item \textbf{On-Demand Paging}: Pages are loaded from disk into memory only when a page fault occurs for them.
+    \item \textbf{Swap Area}: A dedicated space on the disk used to store pages that are temporarily evicted from physical memory.
+    \item \textbf{Paging out}: Copying a page from DRAM to the disk (to the swap area for anonymous pages, or its file for named pages). Paging out a named page is only needed if its dirty bit is set.
+    \item \textbf{kswapd}: A kernel thread that runs when free memory is low to reclaim page frames by paging them out.
+    \item \textbf{Thrashing}: A state where the system spends excessive time paging data between memory and disk, making little progress on actual computation, because there is not enough physical memory to hold the working sets of active processes.
+\end{itemize}
+
+\subsection*{Page Replacement Algorithms}
+\begin{itemize}
+    \item \textbf{Goal}: When memory is full, choose a victim page to evict.
+    \item \textbf{Belady's Optimal}: Replace the page that will be used furthest in the future (unrealizable, used for benchmarking).
+    \item \textbf{LRU (Least Recently Used)}: Replace the page that has not been used for the longest time. Hard to implement perfectly.
+    \item \textbf{Clock Algorithm}: An efficient approximation of LRU using a circular list and a single "referenced" bit per page frame.
+    \item \textbf{Linux PFRA}: Uses two lists (\textbf{active}, \textbf{inactive}) and promotes/demotes pages between them to approximate LRU.
+\end{itemize}
+
+\subsection*{Linux Implementation}
+\begin{itemize}
+    \item \textbf{Multi-Level Page Tables}: x86-64 uses a 4-level hierarchy (PML4, PDPT, PDT, PT) to avoid needing large, contiguous page tables. The \textbf{CR3} register points to the top-level table (PML4).
+    \item \textbf{mm\_struct}: The kernel's primary memory descriptor for a process address space. Contains pointers to page tables (\texttt{pgd}), a list of memory regions (\texttt{mmap}), and usage counters (\texttt{mm\_users}, \texttt{mm\_count}).
+    \item \textbf{vm\_area\_struct (VMA)}: Represents a contiguous memory region (e.g., stack, heap, code, mapped file). Has permissions like \texttt{VM\_READ}, \texttt{VM\_WRITE}, \texttt{VM\_EXEC}, and flags like \texttt{VM\_SHARED}.
+    \item \textbf{mmap()}: Syscall to create a new VMA, mapping files into the address space (file-backed) or allocating anonymous memory.
+    \item \textbf{Copy-on-Write (COW)}: On \texttt{fork()}, the parent's writable, private pages are shared with the child and marked as read-only in both processes' page tables. A page fault on a write triggers the kernel to make a private, writable copy for the writing process.
+\end{itemize}
+
+\sectiondivider
+\section*{Storage \& Filesystems}
+\subsection*{Storage Devices}
+\begin{itemize}
+    \item \textbf{HDD (Hard Disk Drive)}: Mechanical storage. Access time = seek time + rotational latency. Performance is best for sequential access.
+    \item \textbf{SSD (Solid State Drive)}: Flash memory-based. Much lower latency for random access than HDDs. Cannot overwrite data in place; must erase larger blocks.
+    \item \textbf{DMA (Direct Memory Access)}: A hardware mechanism allowing devices (like disks) to transfer data directly to/from main memory without involving the CPU, which is notified by an interrupt upon completion.
+\end{itemize}
+
+\subsection*{RAID}
+\begin{itemize}
+    \item \textbf{RAID 0 (Striping)}: Data is striped across disks. Provides the best performance but no redundancy. One disk failure leads to total data loss.
+    \item \textbf{RAID 1 (Mirroring)}: Data is duplicated across disks. Provides full redundancy but has a 50\% capacity cost.
+    \item \textbf{RAID 4 (Striping with Parity Disk)}: Stripes data and stores parity information on a single dedicated disk. The parity disk becomes a write bottleneck.
+    \item \textbf{RAID 5 (Striping with Distributed Parity)}: Stripes data and distributes parity blocks across all disks, avoiding the RAID 4 bottleneck. Protects against a single disk failure.
+    \item \textbf{RAID 6 (Striping with Dual Parity)}: Distributes two independent parity blocks. Protects against two concurrent disk failures.
+\end{itemize}
+
+\subsection*{Filesystem Concepts}
+\begin{itemize}
+    \item \textbf{File}: A logical, non-volatile unit of information with a name, content, and metadata.
+    \item \textbf{inode (index node)}: A data structure containing file metadata: permissions, size, owner, timestamps, and pointers to the file's data blocks. The filename is not in the inode.
+    \item \textbf{dirent (directory entry)}: An entry in a directory file that maps a human-readable filename to an inode number.
+    \item \textbf{Links}:
+        \begin{itemize}
+            \item \textbf{Hard Link}: A second directory entry pointing to the same inode. Must be on the same filesystem. The file is deleted only when its link count (in the inode) drops to zero.
+            \item \textbf{Symbolic (Soft) Link}: A special file that stores a path string to another file. Can cross filesystems and can be "dangling" if the target is removed.
+        \end{itemize}
+    \item \textbf{File Descriptor (FD)}: A small, per-process integer handle for an open file. It is an index into the per-process \textbf{File Descriptor Table (FDT)}.
+    \item Each FDT entry points to a system-wide \textbf{File Object} (representing an open file instance), which in turn points to the file's \textbf{inode}.
+\end{itemize}
+
+\subsection*{Filesystem Implementation}
+\begin{itemize}
+    \item \textbf{Layout}: A filesystem on disk typically contains a \textbf{superblock} (global FS metadata), \textbf{bitmaps} (to track free inodes and data blocks), an \textbf{inode table}, and \textbf{data blocks}.
+    \item \textbf{Allocation Methods}:
+        \begin{itemize}
+            \item \textbf{Multi-Level Index}: An inode contains direct pointers to data blocks, plus single, double, and triple indirect pointers to handle very large files.
+            \item \textbf{Extents}: A contiguous run of data blocks, stored as (start block, length) pairs. Reduces fragmentation and metadata overhead compared to block pointers. Used in ext4.
+            \item \textbf{FAT (File Allocation Table)}: A simple FS that uses a table in memory to form linked lists of data blocks for each file. No inodes; metadata is in the directory entry.
+        \end{itemize}
+    \item \textbf{Journaling}: Writing metadata changes to a transaction log (\textbf{journal}) before applying them to the main filesystem. This ensures filesystem consistency after a crash. Used in ext3/ext4.
+    \item \textbf{Path Resolution}: Translating a path like `/home/user/file.txt` to an inode involves reading each directory in the path to find the next component's inode number. The user needs execute (search) permission on all directories in the path.
+\end{itemize}
+
+\sectiondivider
+\section*{Networking}
+\begin{itemize}
+    \item \textbf{Protocol Stack}: Layered model for network communication. e.g., L5-Application (HTTP), L4-Transport (TCP/UDP), L3-Network (IP), L2-Data Link (Ethernet).
+    \item \textbf{TCP (Transmission Control Protocol)}: Reliable, connection-oriented, stream-based protocol. Uses a 3-way handshake to establish connections, sequence numbers and ACKs for reliability, and manages flow control and congestion control.
+    \item \textbf{UDP (User Datagram Protocol)}: Unreliable, connectionless, datagram-based. Low overhead, but packets can be lost, reordered, or duplicated.
+    \item \textbf{IP Address}: A logical address for a host, composed of a \textbf{network part} and a \textbf{host part}, as defined by the subnet mask.
+    \item \textbf{Socket}: A communication endpoint represented by a file descriptor. A TCP connection is uniquely identified by a 5-tuple: (protocol, source IP, source port, destination IP, destination port).
+    \item \textbf{Client-Server Flow (TCP)}: Server: \texttt{socket} $\to$ \texttt{bind} $\to$ \texttt{listen} $\to$ \texttt{accept}. Client: \texttt{socket} $\to$ \texttt{connect}.
+    \item \textbf{Ethernet (L2)}: The dominant LAN technology. Uses \textbf{MAC addresses} (48-bit unique hardware addresses) for local delivery.
+    \item \textbf{Key Protocols}:
+        \begin{itemize}
+            \item \textbf{ARP} (Address Resolution Protocol): Translates an IP address to a MAC address on a local network.
+            \item \textbf{DHCP} (Dynamic Host Config. Protocol): Allows a host to automatically obtain an IP address and other network settings.
+            \item \textbf{NAT} (Network Address Translation): Allows multiple devices on a private network to share a single public IP address.
+        \end{itemize}
+\end{itemize}
+
+\end{multicols}
+
+\end{document}

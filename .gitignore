@@ -1,6 +1,8 @@
 # Ignore all files within these specific directories
 /Course Summary/*
 /Functions/*
+/Cheat Sheet/*
+/Compressed Summary/*
 
 # Now, create exceptions to the rules above.
 # IMPORTANT: Do NOT ignore the .tex and .pdf files inside them.
@@ -8,3 +10,7 @@
 !/Course Summary/*.tex
 !/Functions/*.pdf
 !/Functions/*.tex
+!/Cheat Sheet/*.pdf
+!/Cheat Sheet/*.tex
+!/Compressed Summary/*.pdf
+!/Compressed Summary/*.tex

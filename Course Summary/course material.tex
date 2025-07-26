@@ -478,7 +478,7 @@ Using several CPU cores (=processors) for running a single job to solve a single
     \paragraph{Threads}
     A process can have multiple threads, which share (nearly) everything, including the process's memory space, file descriptors, heap, static data, code segment and more.
 
-    \hspace*{2em}However, each thread has its own stack, registers, and program counter. But they can still access each other's stack since they share the same memory space.
+    \hspace*{2em}However, each thread has its own stack, \ul{kernel stack}, registers, and program counter. But they can still access each other's stack since they share the same memory space.
   \end{minipage}
 \end{center}
 
@@ -716,7 +716,7 @@ The usage of ULTs is mainly for concurrent programming, where we want multiple m
 \end{enumerate}
 
 
-\paragraph{BIOS (Basic Input/Output System)} The BIOS is located in the motherboard, loaded to the same memory location always, and is the first code that runs when the computer is powered on. It performs the following tasks:
+\paragraph{BIOS (Basic Input/Output System)} The BIOS is located in the motherboard in \ul{ROM}, loaded to the same memory location always, and is the first code that runs when the computer is powered on. It performs the following tasks:
 \begin{itemize}
   \item Identify the hardware components of the system that are connected.
   \item Check if basic hardware components are working properly (screen, keyboard, etc)
@@ -2069,7 +2069,7 @@ We will focus on Ethernet, which is the most common LAN technology.
 
 
 \paragraph{ARP (Address Resolution Protocol):} \blue{IP \(\Longrightarrow\) MAC} \\
-ARP is a protocol used to map IP addresses to MAC addresses. When a device wants to communicate with another device on the same local network, it needs to know the MAC address of the destination device. If it only knows the IP address, it \blue{broadcasts} an ARP query packet (containing the destination IP and -1 as the MAC) to the local network, asking "Who has IP address X.X.X.X? Tell me your MAC address." The device with the matching IP address responds with its MAC address, allowing the sender to encapsulate the data in a frame and send it to the correct destination. If the destination is not on the same local network, the sender will get the MAC to \textbf{its default gateway (router)}, its first-hop router, which will then forward the packet to the correct destination network.
+ARP is a protocol used to map IP addresses to MAC addresses. When a device wants to communicate with another device on the same local network, it needs to know the MAC address of the destination device. If it only knows the IP address, it \blue{broadcasts} an ARP query packet (containing the destination IP and -1 as the MAC) to the local network, asking "Who has IP address X.X.X.X? Tell me your MAC address." The device with the matching IP address responds with its MAC address, allowing the sender to encapsulate the data in a frame and send it to the correct destination. If the destination is not on the same local network, the sender will get the MAC to \textbf{its default gateway (router)} by \ul{an additional ARP request} for the default gateway, its first-hop router, which will then forward the packet to the correct destination network.
 
 \paragraph{NAT (Network Address Translation):} \gray{private IPs} \\
 NAT is a technique used to allow multiple devices on a local network to share a single public IP address. NAT defines new private IP addresses for each device on the local network, allowing them to communicate with each other using these private addresses. When a device wants to communicate with the outside world, NAT translates its private IP address to the public IP address, allowing the device to access the internet. This helps conserve the limited pool of public IP addresses and provides an additional layer of security by hiding the internal network structure from external entities. To do so, NAT maintains a mapping between pairs of (private IP addresses + port) and (public IP address + port).

@@ -115,8 +115,6 @@
 
 
 
-
-
 \part{Functions Reference}
 
 
@@ -177,25 +175,35 @@
 {The \code{execv()} function is one of the \textit{exec} family of functions, which replace the current process image with a new process image. \underline{It does not create a new process;} \underline{it replaces the current one}. The \code{v} stands for the array of arguments, \code{p} is for searching in the \code{PATH} environment variable for the filename. \label{func:execv}}
 
 
-
 \functionEntry{getpid, getppid}
 {pid\_t getpid();\\ pid\_t getppid();}
-{\code{getpid()} returns the PID of the calling process, and \code{getppid()} returns the PID of the \textbf{\gray{real}} parent process.}
+{\code{getpid()} returns the PID of the calling process (in Linux, this is the TGID). \code{getppid()} returns the PID of the parent process.}
 {None}
 {Returns the PID of the calling process or its parent accordingly.}
 {\label{func:getpid}}
 
+\functionEntry{gettid}
+{pid\_t gettid();}
+{Returns the thread ID (TID) of the calling thread. In Linux, each thread has a unique process ID (PID) which is its TID.}
+{None}
+{Returns the TID of the calling thread.}
+{This is a Linux-specific system call. \code{getpid()} returns the thread group ID (TGID), which is the same for all threads in a process, while \code{gettid()} returns the unique ID for each thread.\label{func:gettid}}
 
-
-
-
-
+\functionEntryPar{ptrace}
+{long ptrace(enum \_\_ptrace\_request request, pid\_t pid, void *addr, void *data);}
+{Provides a means by which one process (the "tracer") may observe and control the execution of another process (the "tracee"), and examine and change the tracee's memory and registers. It is primarily used to implement breakpoint debugging and system call tracing.}
+{\item \code{request}: Specifies the ptrace action to be performed (e.g., \code{PTRACE\_ATTACH}, \code{PTRACE\_DETACH}).
+ \item \code{pid}: Specifies the process ID of the tracee.
+ \item \code{addr}: Specifies an address in the tracee's memory space.
+ \item \code{data}: Specifies data to be written to the tracee's memory or registers.}
+{On success, the return value depends on the request. On error, -1 is returned, and \code{errno} is set.}
+{A process being traced becomes the child of the tracer process (its `parent` field in the PCB points to the tracer). The original parent is stored in `real\_parent`.\label{func:ptrace}}
 
 
 % =====================================================
-% ======================= Topic 1 =====================
+% ======================= Topic 2 =====================
 % =====================================================
-\Topic{IPC \& I/O}
+\Topic{Signals}
 
 \functionEntryPar{kill}
 {int kill(pid\_t pid, int sig);}
@@ -213,8 +221,230 @@
 {\item \code{signum}: The signal number to set the handler for. \gray{(e.g. \code{SIGINT}, \code{SIGTERM}, etc.)}.
   \item \code{handler}: The function to call when the signal is received. If \code{handler} is \code{SIG\_IGN}, the signal is ignored. If \code{handler} is \code{SIG\_DFL}, the default action for the signal is restored.}
 {On success, returns the previous signal handler for the specified signal. If there was no previous handler, it returns \code{SIG\_DFL} or \code{SIG\_IGN}. On error, it returns \code{SIG\_ERR}.}
-{\label{func:signal}}
+{\code{sigaction} is preferred over \code{signal} for portability and more features.\label{func:signal}}
 
+\functionEntryPar{sigaction}
+{int sigaction(int signum, const struct sigaction *act, struct sigaction *oldact);}
+{Examines and changes the action associated with a specific signal. It is more robust and portable than \code{signal()}.}
+{\item \code{signum}: The signal number.
+ \item \code{act}: Pointer to a \code{sigaction} structure specifying the new action. If NULL, the action is not changed.
+ \item \code{oldact}: Pointer to a \code{sigaction} structure where the old action is stored. If NULL, the old action is not saved.}
+{Returns 0 on success and -1 on error.}
+{The \code{sigaction} structure contains fields for the handler, a signal mask to apply during handler execution, and flags to modify behavior.\label{func:sigaction}}
+
+\functionEntryPar{sigprocmask}
+{int sigprocmask(int how, const sigset\_t *set, sigset\_t *oldset);}
+{Examines and/or changes the signal mask of the calling thread. The signal mask is the set of signals whose delivery is currently blocked for the caller.}
+{\item \code{how}: Specifies how the signal mask is to be changed. Can be \code{SIG\_BLOCK} (add signals to mask), \code{SIG\_UNBLOCK} (remove signals), or \code{SIG\_SETMASK} (replace mask).
+ \item \code{set}: Pointer to a set of signals.
+ \item \code{oldset}: If not NULL, the previous value of the signal mask is stored here.}
+{Returns 0 on success and -1 on error.}
+{Used to prevent race conditions by temporarily blocking signals during critical sections.\label{func:sigprocmask}}
+
+\functionEntry{alarm}
+{unsigned int alarm(unsigned int seconds);}
+{Arranges for a \code{SIGALRM} signal to be delivered to the process in \code{seconds} seconds.}
+{\code{seconds}: The number of seconds to wait before sending the signal. If 0, any pending alarm is canceled.}
+{Returns the number of seconds remaining until any previously scheduled alarm was due to be delivered, or zero if there was no previously scheduled alarm.}
+{\label{func:alarm}}
+
+\functionEntryPar{setitimer}
+{int setitimer(int which, const struct itimerval *new\_value, struct itimerval *old\_value);}
+{Sets the value of the interval timer specified by \code{which}. This can be used to generate signals at regular intervals.}
+{\item \code{which}: The type of timer (\code{ITIMER\_REAL} for \code{SIGALRM}, \code{ITIMER\_VIRTUAL} for \code{SIGVTALRM}, \code{ITIMER\_PROF} for \code{SIGPROF}).
+ \item \code{new\_value}: Specifies the new timer value (interval and initial value).
+ \item \code{old\_value}: If not NULL, stores the previous timer value.}
+{Returns 0 on success, -1 on error.}
+{More flexible than \code{alarm()}, allowing for periodic timers.\label{func:setitimer}}
+
+\functionEntryPar{setrlimit}
+{int setrlimit(int resource, const struct rlimit *rlim);}
+{Sets resource limits for a process. For example, it can set the maximum CPU time a process can consume.}
+{\item \code{resource}: The resource to limit (e.g., \code{RLIMIT\_CPU}).
+ \item \code{rlim}: A pointer to a \code{rlimit} structure that specifies the soft and hard limits for the resource.}
+{Returns 0 on success, -1 on error.}
+{Exceeding the soft limit for CPU time results in a \code{SIGXCPU} signal. Exceeding the hard limit results in a \code{SIGKILL} signal.\label{func:setrlimit}}
+
+% =====================================================
+% ======================= Topic 3 =====================
+% =====================================================
+\Topic{Threads}
+
+\functionEntryPar{pthread\_create}
+{int pthread\_create(pthread\_t *thread, const pthread\_attr\_t *attr, void *(*start\_routine) (void *), void *arg);}
+{Creates a new thread within a process.}
+{\item \code{thread}: Pointer to a \code{pthread\_t} variable that will be set to the ID of the new thread.
+ \item \code{attr}: Pointer to attributes for the new thread (e.g., stack size). If NULL, default attributes are used.
+ \item \code{start\_routine}: The function that the new thread will execute.
+ \item \code{arg}: The argument to be passed to the \code{start\_routine}.}
+{Returns 0 on success, and a non-zero error code on failure.}
+{The new thread shares the same memory space, file descriptors, etc., with the creating thread, but has its own stack and registers.\label{func:pthread_create}}
+
+\functionEntry{pthread\_self}
+{pthread\_t pthread\_self(void);}
+{Returns the thread ID of the calling thread.}
+{None}
+{Returns the thread ID of the calling thread.}
+{This ID is used to identify the thread in other pthread functions.\label{func:pthread_self}}
+
+\functionEntry{pthread\_exit}
+{void pthread\_exit(void *retval);}
+{Terminates the calling thread and makes a return value available to any thread that joins it.}
+{\code{retval}: A pointer to the return value of the thread. This value can be obtained by another thread calling \code{pthread\_join()}.}
+{This function does not return.}
+{Calling \code{exit()} from any thread terminates the entire process, while \code{pthread\_exit()} only terminates the calling thread.\label{func:pthread_exit}}
+
+\functionEntry{pthread\_cancel}
+{int pthread\_cancel(pthread\_t thread);}
+{Sends a cancellation request to the specified thread.}
+{\code{thread}: The ID of the thread to be canceled.}
+{Returns 0 on success, and a non-zero error code on failure.}
+{Whether and when the target thread reacts to the cancellation request depends on its cancellation state and type.\label{func:pthread_cancel}}
+
+\functionEntryPar{pthread\_join}
+{int pthread\_join(pthread\_t thread, void **retval);}
+{Waits for the specified thread to terminate. This is analogous to \code{wait()} for processes.}
+{\item \code{thread}: The ID of the thread to wait for.
+ \item \code{retval}: A pointer to a location where the exit status of the terminated thread will be stored.}
+{Returns 0 on success, and a non-zero error code on failure.}
+{A thread that is joined is automatically detached, and its resources are cleaned up.\label{func:pthread_join}}
+
+\functionEntryPar{clone}
+{int clone(int (*fn)(void *), void *child\_stack, int flags, void *arg, ...);}
+{Creates a new child process, in a manner similar to \code{fork()}. Unlike \code{fork()}, \code{clone()} allows the child process to share parts of its execution context with the calling process, such as the memory space, the table of file descriptors, and the table of signal handlers.}
+{\item \code{fn}: Pointer to the function to be executed by the child process.
+ \item \code{child\_stack}: Pointer to the top of the stack for the child process.
+ \item \code{flags}: A bitmask that specifies what is shared between the parent and child (e.g., \code{CLONE\_VM}, \code{CLONE\_FILES}, \code{CLONE\_THREAD}).
+ \item \code{arg}: Argument to be passed to the function \code{fn}.}
+{On success, the thread ID of the child process is returned in the parent's thread of execution. On failure, -1 is returned.}
+{This is the underlying system call used by \code{fork()} and \code{pthread\_create()} in Linux.\label{func:clone}}
+
+% =====================================================
+% ======================= Topic 4 =====================
+% =====================================================
+\Topic{Synchronization}
+
+\functionEntryPar{mutex\_init}
+{int pthread\_mutex\_init(pthread\_mutex\_t *mutex, const pthread\_mutexattr\_t *attr);}
+{Initializes a mutex object.}
+{\item \code{mutex}: A pointer to the mutex object to be initialized.
+ \item \code{attr}: A pointer to a mutex attributes object. If NULL, default attributes are used.}
+{Returns 0 on success, and a non-zero error code on failure.}
+{A mutex must be initialized before it can be used.\label{func:mutex_init}}
+
+\functionEntry{mutex\_lock}
+{int pthread\_mutex\_lock(pthread\_mutex\_t *mutex);}
+{Locks a mutex. If the mutex is already locked by another thread, the calling thread blocks until the mutex becomes available.}
+{\code{mutex}: A pointer to the mutex object.}
+{Returns 0 on success, and a non-zero error code on failure.}
+{\label{func:mutex_lock}}
+
+\functionEntry{mutex\_trylock}
+{int pthread\_mutex\_trylock(pthread\_mutex\_t *mutex);}
+{Attempts to lock a mutex without blocking. If the mutex is available, it is locked. If it is already locked, the function returns immediately with an error.}
+{\code{mutex}: A pointer to the mutex object.}
+{Returns 0 if the lock was acquired, and a non-zero error code otherwise (e.g., \code{EBUSY} if the mutex is already locked).}
+{\label{func:mutex_trylock}}
+
+\functionEntry{mutex\_unlock}
+{int pthread\_mutex\_unlock(pthread\_mutex\_t *mutex);}
+{Unlocks a mutex. This allows another thread that is waiting for the mutex to proceed.}
+{\code{mutex}: A pointer to the mutex object.}
+{Returns 0 on success, and a non-zero error code on failure.}
+{Only the thread that locked a mutex should unlock it.\label{func:mutex_unlock}}
+
+\functionEntry{mutex\_destroy}
+{int pthread\_mutex\_destroy(pthread\_mutex\_t *mutex);}
+{Destroys a mutex object, freeing any resources it might hold. The mutex must be unlocked.}
+{\code{mutex}: A pointer to the mutex object to be destroyed.}
+{Returns 0 on success, and a non-zero error code on failure.}
+{\label{func:mutex_destroy}}
+
+\functionEntryPar{cond\_wait}
+{int pthread\_cond\_wait(pthread\_cond\_t *cond, pthread\_mutex\_t *mutex);}
+{Atomically unlocks the mutex and waits for the condition variable \code{cond} to be signaled. The thread re-acquires the mutex before returning.}
+{\item \code{cond}: A pointer to the condition variable.
+ \item \code{mutex}: A pointer to the associated mutex, which must be locked by the calling thread.}
+{Returns 0 on success, and a non-zero error code on failure.}
+{Should be called in a loop to protect against spurious wakeups: \code{while(!condition) cond\_wait(...);}\label{func:cond_wait}}
+
+\functionEntry{cond\_signal}
+{int pthread\_cond\_signal(pthread\_cond\_t *cond);}
+{Wakes up at least one thread that is currently waiting on the specified condition variable.}
+{\code{cond}: A pointer to the condition variable.}
+{Returns 0 on success, and a non-zero error code on failure.}
+{\label{func:cond_signal}}
+
+\functionEntry{cond\_broadcast}
+{int pthread\_cond\_broadcast(pthread\_cond\_t *cond);}
+{Wakes up all threads that are currently waiting on the specified condition variable.}
+{\code{cond}: A pointer to the condition variable.}
+{Returns 0 on success, and a non-zero error code on failure.}
+{\label{func:cond_broadcast}}
+
+\functionEntryPar{sem\_init}
+{int sem\_init(sem\_t *sem, int pshared, unsigned int value);}
+{Initializes an unnamed semaphore.}
+{\item \code{sem}: A pointer to the semaphore object.
+ \item \code{pshared}: If 0, the semaphore is shared between threads of a process. If non-zero, it is shared between processes.
+ \item \code{value}: The initial value of the semaphore.}
+{Returns 0 on success, -1 on error.}
+{\label{func:sem_init}}
+
+\functionEntry{sem\_wait}
+{int sem\_wait(sem\_t *sem);}
+{Decrements (locks) the semaphore. If the semaphore's value is greater than zero, the decrement proceeds, and the function returns immediately. If the semaphore currently has the value zero, the call blocks until it becomes possible to perform the decrement.}
+{\code{sem}: A pointer to the semaphore object.}
+{Returns 0 on success, -1 on error.}
+{This operation is also known as P, down, or wait.\label{func:sem_wait}}
+
+\functionEntry{sem\_post}
+{int sem\_post(sem\_t *sem);}
+{Increments (unlocks) the semaphore. If the semaphore's value consequently becomes greater than zero, then another process or thread blocked in a \code{sem\_wait()} call will be woken up and proceed to lock the semaphore.}
+{\code{sem}: A pointer to the semaphore object.}
+{Returns 0 on success, -1 on error.}
+{This operation is also known as V, up, or signal.\label{func:sem_post}}
+
+\functionEntry{sem\_destroy}
+{int sem\_destroy(sem\_t *sem);}
+{Destroys an unnamed semaphore, freeing any resources it might hold.}
+{\code{sem}: A pointer to the semaphore object.}
+{Returns 0 on success, -1 on error.}
+{\label{func:sem_destroy}}
+
+% =====================================================
+% ======================= Topic 5 =====================
+% =====================================================
+\Topic{Scheduling}
+
+\functionEntry{sched\_yield}
+{int sched\_yield(void);}
+{Causes the calling thread to relinquish the CPU. The thread is moved to the end of the queue for its static priority and a new thread gets to run.}
+{None}
+{Returns 0 on success, -1 on error.}
+{A process voluntarily gives up the CPU.\label{func:sched_yield}}
+
+\functionEntryPar{sched\_setscheduler}
+{int sched\_setscheduler(pid\_t pid, int policy, const struct sched\_param *param);}
+{Sets both the scheduling policy and parameters for the thread whose ID is specified in \code{pid}.}
+{\item \code{pid}: The process/thread ID. If 0, the scheduler of the calling thread is set.
+ \item \code{policy}: The scheduling policy (e.g., \code{SCHED\_OTHER}, \code{SCHED\_FIFO}, \code{SCHED\_RR}).
+ \item \code{param}: Pointer to a structure containing the scheduling parameters (e.g., priority).}
+{Returns 0 on success, -1 on error.}
+{Allows for setting realtime scheduling policies, which requires appropriate privileges.\label{func:sched_setscheduler}}
+
+\functionEntry{nice}
+{int nice(int inc);}
+{Adds \code{inc} to the nice value for the calling thread. A higher nice value means a lower priority.}
+{\code{inc}: The value to add to the current nice value.}
+{On success, the new nice value is returned. On error, -1 is returned.}
+{The range for user nice values is -20 (highest priority) to 19 (lowest priority).\label{func:nice}}
+
+
+% =====================================================
+% ======================= Topic 6 =====================
+% =====================================================
+\Topic{File \& I/O Operations}
 
 \functionEntryPar{open}
 {int open(const char *pathname, int flags, mode\_t mode); \gray{(mode\_t is optional)}}
@@ -280,7 +510,43 @@
 {In case of success, returns the number of bytes written (which can be less than \code{count} if fewer bytes can be written). On error, it returns -1 and sets \code{errno} to indicate the error.}
 {As with \code{read()}, \code{write()} is a \red{blocking call} by default, meaning it will wait until the data can be written. And the \blue{seek pointer} of the \code{fd} is advanced by the number of bytes written. \label{func:write}}
 
+\functionEntryPar{lseek}
+{off\_t lseek(int fd, off\_t offset, int whence);}
+{Repositions the file offset of the open file description associated with the file descriptor \code{fd} to the argument \code{offset} according to the directive \code{whence}.}
+{\item \code{fd}: The file descriptor.
+ \item \code{offset}: The new offset.
+ \item \code{whence}: The directive for the new offset (\code{SEEK\_SET} from the beginning, \code{SEEK\_CUR} from the current position, \code{SEEK\_END} from the end of the file).}
+{Upon successful completion, \code{lseek()} returns the resulting offset location as measured in bytes from the beginning of the file. On error, the value (off\_t) -1 is returned.}
+{\label{func:lseek}}
 
+\functionEntryPar{pread}
+{ssize\_t pread(int fd, void *buf, size\_t count, off\_t offset);}
+{Reads up to \code{count} bytes from file descriptor \code{fd} at \code{offset} into the buffer \code{buf}. The file offset is not changed.}
+{\item \code{fd}: The file descriptor.
+ \item \code{buf}: The buffer to store the data.
+ \item \code{count}: The number of bytes to read.
+ \item \code{offset}: The offset in the file to start reading from.}
+{On success, the number of bytes read is returned. On error, -1 is returned.}
+{Useful for multi-threaded applications where multiple threads read from the same file descriptor without interfering with each other's file offset.\label{func:pread}}
+
+\functionEntryPar{pwrite}
+{ssize\_t pwrite(int fd, const void *buf, size\_t count, off\_t offset);}
+{Writes up to \code{count} bytes from the buffer \code{buf} to the file descriptor \code{fd} at \code{offset}. The file offset is not changed.}
+{\item \code{fd}: The file descriptor.
+ \item \code{buf}: The buffer containing the data.
+ \item \code{count}: The number of bytes to write.
+ \item \code{offset}: The offset in the file to start writing to.}
+{On success, the number of bytes written is returned. On error, -1 is returned.}
+{Similar to \code{pread}, it's an atomic operation that doesn't affect the file's current offset.\label{func:pwrite}}
+
+\functionEntryPar{ioctl}
+{int ioctl(int fd, unsigned long request, ...);}
+{Manipulates the underlying device parameters of special files. The third argument is an untyped pointer to memory.}
+{\item \code{fd}: The file descriptor of the device.
+ \item \code{request}: A device-dependent request code.
+ \item \code{...}: An optional untyped pointer to memory, used to pass data to/from the device driver.}
+{Usually, on success 0 is returned. A few \code{ioctl} requests use the return value as an output parameter. On error, -1 is returned.}
+{Allows adding additional functionality to a device driver beyond the standard read/write operations.\label{func:ioctl}}
 
 \functionEntryPar{pipe}
 {int pipe(int filedes[2]);}
@@ -294,9 +560,7 @@
   \end{enumerate}
 }
 {Return 0 if successful, otherwise -1.}
-{\label{func:pipe}}
-
-
+{Pipes reside in memory, not on disk, and are used for IPC between related processes (e.g., parent and child).\label{func:pipe}}
 
 \functionEntryPar{dup, dup2}
 {int dup(int oldfd);\\ int dup2(int oldfd, int newfd);}
@@ -311,6 +575,24 @@
 }
 {If we want to close a file we need to close all of its FDs, which they all point to the same \textit{File Object}\label{func:dup}}
 
+\functionEntry{sync}
+{void sync(void);}
+{Causes all buffered modifications to file metadata and data to be written to the underlying filesystems.}
+{None}
+{This function always succeeds.}
+{This is a system-wide sync. \code{fsync} is preferred for syncing a single file.\label{func:sync}}
+
+\functionEntry{fsync}
+{int fsync(int fd);}
+{Transfers ("flushes") all modified in-core data of (i.e., modified buffer cache pages for) the file referred to by the file descriptor \code{fd} to the disk device.}
+{\code{fd}: The file descriptor of the file to be synced.}
+{Returns 0 on success, -1 on error.}
+{Ensures that data is physically written to the storage device, providing data integrity.\label{func:fsync}}
+
+% =====================================================
+% ======================= Topic 7 =====================
+% =====================================================
+\Topic{Filesystem \& Directories}
 
 \functionEntryPar{mkfifo}
 {int mkfifo(const char *pathname, mode\_t mode);}
@@ -325,13 +607,238 @@
   If opened for read \& write it will be \purple{non-blocking}\label{func:mkfifo}
 }
 
+\functionEntry{creat}
+{int creat(const char *pathname, mode\_t mode);}
+{Creates a new file or overwrites an existing one. It is equivalent to \code{open(pathname, O\_CREAT|O\_WRONLY|O\_TRUNC, mode)}.}
+{\code{pathname}: The path of the file to create.
+ \code{mode}: The permissions for the new file.}
+{Returns a new file descriptor for the file, or -1 on error.}
+{This function is considered obsolete; \code{open()} is preferred.\label{func:creat}}
 
+\functionEntry{unlink}
+{int unlink(const char *pathname);}
+{Deletes a name from the filesystem. If that name was the last link to a file and no processes have the file open, the file is deleted and the space it was using is made available for reuse.}
+{\code{pathname}: The path of the file name to delete.}
+{Returns 0 on success, -1 on error.}
+{Used to remove files and symbolic links.\label{func:unlink}}
 
+\functionEntry{rmdir}
+{int rmdir(const char *pathname);}
+{Deletes a directory, which must be empty.}
+{\code{pathname}: The path of the directory to delete.}
+{Returns 0 on success, -1 on error.}
+{\label{func:rmdir}}
 
+\functionEntryPar{rename}
+{int rename(const char *oldpath, const char *newpath);}
+{Renames a file, moving it between directories if required.}
+{\item \code{oldpath}: The current path of the file.
+ \item \code{newpath}: The new path for the file.}
+{Returns 0 on success, -1 on error.}
+{This operation is atomic.\label{func:rename}}
 
+\functionEntryPar{stat, fstat, lstat}
+{int stat(const char *pathname, struct stat *statbuf);
+ int fstat(int fd, struct stat *statbuf);
+ int lstat(const char *pathname, struct stat *statbuf);}
+{Retrieve information about the file pointed to by \code{pathname} or \code{fd}.}
+{\item \code{pathname/fd}: The file to get information about.
+ \item \code{statbuf}: A pointer to a buffer where the file information will be stored.}
+{Returns 0 on success, -1 on error.}
+{\code{stat} follows symbolic links, \code{lstat} provides information about the link itself, and \code{fstat} operates on an open file descriptor.\label{func:stat}}
 
+\functionEntryPar{chmod, fchmod}
+{int chmod(const char *pathname, mode\_t mode);
+ int fchmod(int fd, mode\_t mode);}
+{Changes the permissions of a file.}
+{\item \code{pathname/fd}: The file to change permissions for.
+ \item \code{mode}: The new permission bits.}
+{Returns 0 on success, -1 on error.}
+{\label{func:chmod}}
 
+\functionEntryPar{chown, fchown}
+{int chown(const char *pathname, uid\_t owner, gid\_t group);
+ int fchown(int fd, uid\_t owner, gid\_t group);}
+{Changes the ownership of a file.}
+{\item \code{pathname/fd}: The file to change ownership for.
+ \item \code{owner}: The new user ID.
+ \item \code{group}: The new group ID.}
+{Returns 0 on success, -1 on error.}
+{\label{func:chown}}
 
+\functionEntry{mkdir}
+{int mkdir(const char *pathname, mode\_t mode);}
+{Creates a new directory.}
+{\code{pathname}: The path of the new directory.
+ \code{mode}: The permissions for the new directory.}
+{Returns 0 on success, -1 on error.}
+{\label{func:mkdir}}
+
+\functionEntryPar{symlink}
+{int symlink(const char *target, const char *linkpath);}
+{Creates a symbolic link named \code{linkpath} which contains the string \code{target}.}
+{\item \code{target}: The path that the symbolic link will point to.
+ \item \code{linkpath}: The path of the symbolic link itself.}
+{Returns 0 on success, -1 on error.}
+{\label{func:symlink}}
+
+\functionEntryPar{readlink}
+{ssize\_t readlink(const char *pathname, char *buf, size\_t bufsiz);}
+{Places the contents of the symbolic link \code{pathname} in the buffer \code{buf}, which has size \code{bufsiz}.}
+{\item \code{pathname}: The path of the symbolic link.
+ \item \code{buf}: The buffer to store the target path.
+ \item \code{bufsiz}: The size of the buffer.}
+{On success, returns the number of bytes placed in \code{buf}. On error, -1 is returned.}
+{\label{func:readlink}}
+
+\functionEntryPar{mount}
+{int mount(const char *source, const char *target, const char *filesystemtype, unsigned long mountflags, const void *data);}
+{Attaches the filesystem specified by \code{source} to the directory specified by \code{target}.}
+{\item \code{source}: The device or resource containing the filesystem.
+ \item \code{target}: The mount point directory.
+ \item \code{filesystemtype}: The type of the filesystem (e.g., "ext4").
+ \item \code{mountflags}: Flags controlling the mount operation.
+ \item \code{data}: Filesystem-specific data.}
+{Returns 0 on success, -1 on error.}
+{This is how filesystems become part of the main directory tree.\label{func:mount}}
+
+% =====================================================
+% ======================= Topic 8 =====================
+% =====================================================
+\Topic{Networking}
+
+\functionEntryPar{socket}
+{int socket(int domain, int type, int protocol);}
+{Creates an endpoint for communication and returns a file descriptor that refers to that endpoint.}
+{\item \code{domain}: The communication domain (e.g., \code{AF\_INET} for IPv4).
+ \item \code{type}: The communication semantics (e.g., \code{SOCK\_STREAM} for TCP, \code{SOCK\_DGRAM} for UDP).
+ \item \code{protocol}: The protocol to be used. Usually 0 to select the default for the given type.}
+{Returns a file descriptor for the new socket, or -1 on error.}
+{This is the first step in network communication.\label{func:socket}}
+
+\functionEntryPar{bind}
+{int bind(int sockfd, const struct sockaddr *addr, socklen\_t addrlen);}
+{Assigns the address specified by \code{addr} to the socket referred to by the file descriptor \code{sockfd}.}
+{\item \code{sockfd}: The socket file descriptor.
+ \item \code{addr}: A pointer to a \code{sockaddr} structure containing the address (IP and port) to be bound.
+ \item \code{addrlen}: The length of the address structure.}
+{Returns 0 on success, -1 on error.}
+{Typically used on the server side to assign a well-known port.\label{func:bind}}
+
+\functionEntryPar{listen}
+{int listen(int sockfd, int backlog);}
+{Marks the socket referred to by \code{sockfd} as a passive socket, that is, as a socket that will be used to accept incoming connection requests using \code{accept()}.}
+{\item \code{sockfd}: The socket file descriptor.
+ \item \code{backlog}: The maximum length to which the queue of pending connections for \code{sockfd} may grow.}
+{Returns 0 on success, -1 on error.}
+{Used only on the server side for TCP sockets.\label{func:listen}}
+
+\functionEntryPar{accept}
+{int accept(int sockfd, struct sockaddr *addr, socklen\_t *addrlen);}
+{Extracts the first connection request on the queue of pending connections for the listening socket, \code{sockfd}, creates a new connected socket, and returns a new file descriptor referring to that socket.}
+{\item \code{sockfd}: The listening socket file descriptor.
+ \item \code{addr}: A pointer to a \code{sockaddr} structure to be filled with the address of the connecting client.
+ \item \code{addrlen}: A pointer to the size of the address structure.}
+{Returns a new file descriptor for the connected socket, or -1 on error.}
+{This is a blocking call; it waits until a client connects.\label{func:accept}}
+
+\functionEntryPar{connect}
+{int connect(int sockfd, const struct sockaddr *addr, socklen\_t addrlen);}
+{Connects the socket referred to by the file descriptor \code{sockfd} to the address specified by \code{addr}.}
+{\item \code{sockfd}: The socket file descriptor.
+ \item \code{addr}: A pointer to a \code{sockaddr} structure containing the server's address.
+ \item \code{addrlen}: The length of the address structure.}
+{Returns 0 on success, -1 on error.}
+{Used on the client side to establish a connection with a server.\label{func:connect}}
+
+\functionEntryPar{select}
+{int select(int nfds, fd\_set *readfds, fd\_set *writefds, fd\_set *exceptfds, struct timeval *timeout);}
+{Allows a program to monitor multiple file descriptors, waiting until one or more of the file descriptors become "ready" for some class of I/O operation.}
+{\item \code{nfds}: The highest-numbered file descriptor in any of the three sets, plus one.
+ \item \code{readfds}: Set of FDs to monitor for reading.
+ \item \code{writefds}: Set of FDs to monitor for writing.
+ \item \code{exceptfds}: Set of FDs to monitor for exceptional conditions.
+ \item \code{timeout}: Maximum interval to wait. If NULL, block indefinitely.}
+{Returns the number of ready file descriptors, 0 if the timeout expires, and -1 on error.}
+{Enables event-oriented programming for handling multiple I/O channels concurrently.\label{func:select}}
+
+% =====================================================
+% ======================= Topic 9 =====================
+% =====================================================
+\Topic{Virtual Memory}
+
+\functionEntryPar{mmap}
+{void *mmap(void *addr, size\_t length, int prot, int flags, int fd, off\_t offset);}
+{Creates a new mapping in the virtual address space of the calling process.}
+{\item \code{addr}: The starting address for the new mapping. If NULL, the kernel chooses the address.
+ \item \code{length}: The length of the mapping.
+ \item \code{prot}: Desired memory protection (\code{PROT\_READ}, \code{PROT\_WRITE}, \code{PROT\_EXEC}).
+ \item \code{flags}: Determines whether updates are visible to other processes (\code{MAP\_SHARED}, \code{MAP\_PRIVATE}) and other options (\code{MAP\_ANONYMOUS}).
+ \item \code{fd}: File descriptor for file-backed mapping. -1 for anonymous mapping.
+ \item \code{offset}: Offset in the file to start mapping from.}
+{On success, returns a pointer to the mapped area. On error, \code{MAP\_FAILED} is returned.}
+{A powerful tool for file I/O, IPC, and dynamic memory allocation.\label{func:mmap}}
+
+\functionEntry{sbrk}
+{void *sbrk(intptr\_t increment);}
+{Increments the program's data space by \code{increment} bytes. Calling \code{sbrk()} with an increment of 0 can be used to find the current location of the program break.}
+{\code{increment}: The number of bytes to add to the data space.}
+{On success, returns the previous program break. On error, (void*) -1 is returned.}
+{The traditional way to implement \code{malloc}. Modern implementations often use \code{mmap} instead.\label{func:sbrk}}
+
+% =====================================================
+% ======================= Topic 10 =====================
+% =====================================================
+\Topic{Kernel Modules}
+
+\functionEntry{init\_module}
+{int init\_module(void);}
+{The entry point for a kernel module. This function is called when the module is loaded into the kernel.}
+{None}
+{Returns 0 on success, or a non-zero error code on failure.}
+{Responsible for registering drivers, creating device files, and initializing hardware.\label{func:init_module}}
+
+\functionEntry{cleanup\_module}
+{void cleanup\_module(void);}
+{The exit point for a kernel module. This function is called when the module is unloaded from the kernel.}
+{None}
+{None}
+{Responsible for unregistering drivers, deleting device files, and releasing resources.\label{func:cleanup_module}}
+
+\functionEntryPar{module\_param}
+{module\_param(name, type, perm);}
+{A macro used to declare a module parameter that can be changed at load time.}
+{\item \code{name}: The name of the parameter.
+ \item \code{type}: The data type of the parameter (e.g., int, charp).
+ \item \code{perm}: The file permissions for the parameter's entry in \code{/sys/module/}.}
+{N/A (it's a macro).}
+{Allows for flexible configuration of kernel modules without recompiling.\label{func:module_param}}
+
+\functionEntryPar{mknod}
+{int mknod(const char *pathname, mode\_t mode, dev\_t dev);}
+{Creates a filesystem node (a file, device special file, or named pipe) named \code{pathname}, with attributes specified by \code{mode} and \code{dev}.}
+{\item \code{pathname}: The path for the new node.
+ \item \code{mode}: Specifies both the permissions to use and the type of node to be created.
+ \item \code{dev}: If the node is a character or block special file, this specifies the major and minor numbers of the newly created device special file.}
+{Returns 0 on success, -1 on error.}
+{Used to create device files in \code{/dev}.\label{func:mknod}}
+
+\functionEntryPar{register\_chrdev}
+{int register\_chrdev(unsigned int major, const char *name, const struct file\_operations *fops);}
+{Registers a character device driver with the kernel.}
+{\item \code{major}: The major number to be allocated. If 0, the kernel allocates a dynamic major number.
+ \item \code{name}: The name of the driver, which will appear in \code{/proc/devices}.
+ \item \code{fops}: A pointer to the file operations structure for the driver.}
+{On success, returns the allocated major number. On failure, a negative error code is returned.}
+{Connects a major number to a set of driver functions (\code{file\_operations}).\label{func:register_chrdev}}
+
+\functionEntryPar{unregister\_chrdev}
+{void unregister\_chrdev(unsigned int major, const char *name);}
+{Unregisters a character device driver from the kernel.}
+{\item \code{major}: The major number of the driver to unregister.
+ \item \code{name}: The name of the driver.}
+{None}
+{Called from the module's cleanup function.\label{func:unregister_chrdev}}
 
 
 \part{Cheat Sheet}
@@ -344,7 +851,7 @@
 
 \renewcommand{\arraystretch}{1.2} % Adjust row height
 \rowcolors{2}{gray!10}{white}
-\begin{longtable}{|>{\raggedright\arraybackslash}p{3cm}|>{\raggedright\arraybackslash}p{12cm}|}
+\begin{longtable}{|>{\raggedright\arraybackslash}p{3.5cm}|>{\raggedright\arraybackslash}p{11.5cm}|}
   \hline
   \rowcolor{RoyalBlue!25}
   \textbf{Function} & \textbf{Summary}                                                                                  \\
@@ -356,22 +863,88 @@
 
   \hline
   \code{fork()}     & Creates a child process identical to the parent. Returns 0 to child, PID to parent, -1 on error.  \\
-  \code{wait()}     & Suspends the process until a child ends. Stores exit status in provided pointer.                  \\
+  \code{wait()}     & Suspends the process until any child ends. Stores exit status in provided pointer.                  \\
   \code{waitpid()}  & Waits for a specific child to finish. Can use options like \code{WNOHANG}.                        \\
   \code{exit()}     & Terminates the calling process with a status code. Becomes a zombie until parent collects status. \\
   \code{execv()}    & Replaces the current process image with a new one using the provided filename and argument array. \\
-  \code{getpid()}   & Returns the PID of the current process.                                                           \\
+  \code{getpid()}   & Returns the PID (TGID in Linux) of the current process.                                           \\
   \code{getppid()}  & Returns the PID of the parent process.                                                            \\
+  \code{gettid()}   & Returns the thread ID (TID) of the calling thread (Linux-specific).                               \\
+  \code{ptrace()}   & Allows a tracer process to observe and control a tracee process. Used for debugging.              \\
+  \hline
   \code{kill()}     & Sends a signal to a process by PID. Signal 0 used to check process existence.                     \\
-  \code{signal()}   & Sets a signal handler for a given signal number.                                                  \\
-  \code{open()}     & Opens a file with specified flags and permissions.                                                \\
+  \code{signal()}   & Sets a simple signal handler for a given signal number. (\code{sigaction} is preferred).          \\
+  \code{sigaction()} & Sets a detailed signal handler, allowing control over masks and flags.                            \\
+  \code{sigprocmask()} & Examines and/or changes the signal mask of the calling thread.                                  \\
+  \code{alarm()}    & Sends \code{SIGALRM} after a specified number of seconds.                                         \\
+  \code{setitimer()} & Sets an interval timer that can be periodic (\code{SIGALRM}, \code{SIGVTALRM}, \code{SIGPROF}).    \\
+  \code{setrlimit()} & Sets resource limits (e.g., CPU time) for a process.                                              \\
+  \hline
+  \code{pthread\_create()} & Creates a new thread.                                                                       \\
+  \code{pthread\_self()} & Returns the ID of the calling thread.                                                         \\
+  \code{pthread\_exit()} & Terminates the calling thread.                                                                \\
+  \code{pthread\_cancel()} & Sends a cancellation request to a thread.                                                   \\
+  \code{pthread\_join()} & Waits for a thread to terminate and retrieves its exit status.                                \\
+  \code{clone()}    & The underlying Linux syscall for creating threads and processes with shared resources.            \\
+  \hline
+  \code{mutex\_init()} & Initializes a mutex.                                                                          \\
+  \code{mutex\_lock()} & Locks a mutex, blocking if necessary.                                                           \\
+  \code{mutex\_trylock()} & Attempts to lock a mutex without blocking.                                                    \\
+  \code{mutex\_unlock()} & Unlocks a mutex.                                                                              \\
+  \code{mutex\_destroy()} & Destroys a mutex.                                                                             \\
+  \code{cond\_wait()} & Atomically unlocks a mutex and waits on a condition variable.                                     \\
+  \code{cond\_signal()} & Wakes up one thread waiting on a condition variable.                                            \\
+  \code{cond\_broadcast()} & Wakes up all threads waiting on a condition variable.                                         \\
+  \code{sem\_init()} & Initializes an unnamed semaphore.                                                                 \\
+  \code{sem\_wait()} & Decrements (waits on) a semaphore, blocking if its value is zero.                                 \\
+  \code{sem\_post()} & Increments (signals) a semaphore, waking a waiting thread if any.                                 \\
+  \code{sem\_destroy()} & Destroys an unnamed semaphore.                                                                  \\
+  \hline
+  \code{sched\_yield()} & Causes the calling thread to relinquish the CPU.                                                \\
+  \code{sched\_setscheduler()} & Sets the scheduling policy and parameters for a thread.                                     \\
+  \code{nice()}     & Adjusts the scheduling priority of a process by changing its nice value.                          \\
+  \hline
+  \code{open()}     & Opens or creates a file, returning a file descriptor.                                             \\
   \code{close()}    & Closes a file descriptor.                                                                         \\
   \code{read()}     & Reads up to \code{count} bytes from a file descriptor into a buffer.                              \\
   \code{write()}    & Writes up to \code{count} bytes from a buffer to a file descriptor.                               \\
+  \code{lseek()}    & Repositions the read/write file offset.                                                           \\
+  \code{pread()}/\code{pwrite()} & Reads/writes from/to a given offset without changing the file's current offset.         \\
+  \code{ioctl()}    & Performs device-specific control operations.                                                      \\
   \code{pipe()}     & Creates a unidirectional pipe with two FDs: one for reading, one for writing.                     \\
-  \code{dup()}      & Duplicates an existing file descriptor, returns a new one.                                        \\
-  \code{dup2()}     & Duplicates an FD to a specific new FD, closing the new FD first if open.                          \\
+  \code{dup()}/\code{dup2()} & Duplicates a file descriptor.                                                               \\
+  \code{sync()}     & Schedules all buffered file data and metadata to be written to disk.                              \\
+  \code{fsync()}    & Flushes all data and metadata for a specific file descriptor to disk.                             \\
+  \hline
   \code{mkfifo()}   & Creates a named FIFO (pipe) with given pathname and mode.                                         \\
+  \code{creat()}    & Obsolete function to create a file; use \code{open()} instead.                                    \\
+  \code{unlink()}   & Deletes a name (hard link) from the filesystem.                                                   \\
+  \code{rmdir()}    & Removes an empty directory.                                                                       \\
+  \code{rename()}   & Renames or moves a file.                                                                          \\
+  \code{stat()}/\code{lstat()} & Get file status (metadata). \code{lstat} does not follow symlinks.                         \\
+  \code{chmod()}    & Changes file permissions.                                                                         \\
+  \code{chown()}    & Changes file ownership.                                                                           \\
+  \code{mkdir()}    & Creates a directory.                                                                              \\
+  \code{symlink()}  & Creates a symbolic link.                                                                          \\
+  \code{readlink()} & Reads the value of a symbolic link.                                                               \\
+  \code{mount()}    & Attaches a filesystem to the directory tree.                                                      \\
+  \hline
+  \code{socket()}   & Creates a communication endpoint (socket).                                                        \\
+  \code{bind()}     & Assigns an address (IP/port) to a socket.                                                         \\
+  \code{listen()}   & Puts a TCP socket in listening mode for incoming connections.                                     \\
+  \code{accept()}   & Accepts an incoming connection on a listening socket.                                             \\
+  \code{connect()}  & Establishes a connection to a server.                                                             \\
+  \code{select()}   & Monitors multiple file descriptors for I/O readiness.                                             \\
+  \hline
+  \code{mmap()}     & Maps files or devices into memory.                                                                \\
+  \code{sbrk()}     & Changes the data segment size (used for heap allocation).                                         \\
+  \hline
+  \code{init\_module()} & Entry point function when a kernel module is loaded.                                          \\
+  \code{cleanup\_module()} & Exit point function when a kernel module is unloaded.                                         \\
+  \code{module\_param()} & Macro to declare a kernel module parameter.                                                     \\
+  \code{mknod()}    & Creates a special or ordinary file (e.g., device files).                                          \\
+  \code{register\_chrdev()} & Registers a character device driver.                                                        \\
+  \code{unregister\_chrdev()} & Unregisters a character device driver.                                                      \\
   \hline
 \end{longtable}
 
@@ -379,5 +952,3 @@
 
 
 \end{document}
-
-

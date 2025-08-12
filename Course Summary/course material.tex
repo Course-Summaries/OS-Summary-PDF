@@ -1515,6 +1515,12 @@ Unlike spinning which can be done by the user, going to sleeping is done by a re
 \end{itemize}
 
 
+\paragraph{Spinlock vs. Mutex Lock} We define each one as follows:
+\begin{itemize}
+  \item \textbf{\red{Spinlock}:} When a thread tries to catch the lock, it will keep trying again and again \red{without leaving the run queue}. It can preempt, but not leave the run queue. 
+  \item \textbf{\red{Mutexlock}:} When a thread tries to catch the lock, the \ul{operating system} will move it to the \red{wait queue} and do a context switch.
+\end{itemize}
+
 
 \paragraph{Condition Variables} A condition variable is a synchronization primitive that allows threads to wait for certain conditions to be met, while inside a critical code section without the need to block the CPU!
 A condition variable is always associated with a mutex, and it allows threads to wait for a condition to be signaled by another thread. The typical usage pattern is as follows:
